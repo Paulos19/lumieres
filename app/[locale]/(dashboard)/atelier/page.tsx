@@ -44,7 +44,7 @@ export default async function AtelierPage() {
       </div>
       
       <footer className="text-center text-stone-600 text-xs uppercase tracking-widest border-t border-white/5 pt-8 pb-8">
-        <p>&copy; 2024 Lumière Festin. Haute Cuisine Digital.</p>
+        <p>&copy; 2025 Lumière Festin. Haute Cuisine Digital.</p>
       </footer>
     </div>
   );

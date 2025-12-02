@@ -19,7 +19,7 @@ export default function AuthLayout({
       
       {/* Rodapé sutil opcional */}
       <div className="absolute bottom-4 text-stone-600 text-[10px] uppercase tracking-widest z-10">
-        © 2024 Lumière Festin
+        © 2025 Lumière Festin
       </div>
     </div>
   );
