@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Clock, Users, ChefHat, Save, Check, Share2, Printer } from "lucide-react";
+import { 
+  Clock, Users, ChefHat, Save, Check, PlayCircle, 
+  Image as ImageIcon, ArrowLeft, Share2 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toggleSaveRecipe, checkIsSaved } from "@/actions/recipe";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Tipagem simplificada para o componente
 interface RecipeCardProps {
   recipe: any;
   onClose: () => void;
@@ -16,9 +18,9 @@ interface RecipeCardProps {
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClose }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [mediaView, setMediaView] = useState<'image' | 'video'>('image');
 
   useEffect(() => {
-    // Verificar se já está salvo ao abrir
     checkIsSaved(recipe.title).then(setIsSaved);
   }, [recipe.title]);
 
@@ -37,136 +39,219 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="relative bg-card w-full max-w-5xl rounded-lg border border-gold-500/20 shadow-2xl my-auto flex flex-col max-h-[90vh]">
-        
-        {/* Close Button */}
+    <div className="w-full bg-deep-900 min-h-screen animate-fade-in pb-20">
+      {/* Top Navigation Bar */}
+      <div className="sticky top-0 z-50 bg-deep-900/80 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 p-2 bg-black/50 hover:bg-gold-500 hover:text-black rounded-full text-white transition-colors"
+          className="flex items-center gap-2 text-gold-400 hover:text-white transition-colors text-xs uppercase tracking-widest font-bold"
         >
-          <X size={20} />
+          <ArrowLeft size={16} />
+          Voltar ao Menu
         </button>
-
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1">
-            {/* Hero */}
-            <div className="relative h-64 md:h-96 w-full">
-                {recipe.imageUrl ? (
-                    <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full bg-deep-800 flex items-center justify-center text-stone-600">
-                        <span className="italic">Imagem sendo revelada...</span>
-                    </div>
+        
+        <div className="flex gap-3">
+             <Button 
+                onClick={handleSave}
+                disabled={isSaving}
+                size="sm"
+                className={cn(
+                    "uppercase tracking-widest text-[10px] font-bold transition-all h-9 px-6",
+                    isSaved 
+                        ? "bg-gold-500 text-deep-900 hover:bg-white" 
+                        : "bg-transparent border border-gold-500/30 text-gold-400 hover:bg-gold-500 hover:text-deep-900"
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent"></div>
-                
-                <div className="absolute bottom-6 left-6 right-6">
-                    <div className="flex gap-2 mb-3">
-                        <span className="px-3 py-1 bg-gold-500 text-deep-900 text-xs font-bold uppercase tracking-widest rounded-sm">
-                            {recipe.category}
-                        </span>
-                        <span className="px-3 py-1 bg-black/60 text-gold-100 text-xs font-bold uppercase tracking-widest rounded-sm border border-gold-500/30">
-                            {recipe.complexityRating}
-                        </span>
-                    </div>
-                    <h1 className="font-display text-4xl md:text-5xl text-gold-100 drop-shadow-lg">{recipe.title}</h1>
-                </div>
-            </div>
+            >
+                {isSaved ? <><Check size={14} className="mr-2"/> Salvo</> : <><Save size={14} className="mr-2"/> Salvar</>}
+            </Button>
+        </div>
+      </div>
 
-            {/* Info Bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 border-b border-white/5 bg-deep-900/50 backdrop-blur sticky top-0 z-40">
-                <div className="p-4 flex flex-col items-center justify-center border-r border-white/5">
-                    <Clock className="text-gold-500 mb-1" size={16} />
-                    <span className="text-xs text-stone-400 uppercase tracking-widest">Tempo</span>
-                    <span className="font-medium text-gold-100">{recipe.prepTime}</span>
-                </div>
-                <div className="p-4 flex flex-col items-center justify-center border-r border-white/5">
-                    <Users className="text-gold-500 mb-1" size={16} />
-                    <span className="text-xs text-stone-400 uppercase tracking-widest">Porções</span>
-                    <span className="font-medium text-gold-100">{recipe.portions}</span>
-                </div>
-                <div className="p-4 flex flex-col items-center justify-center border-r border-white/5">
-                    <ChefHat className="text-gold-500 mb-1" size={16} />
-                    <span className="text-xs text-stone-400 uppercase tracking-widest">Dificuldade</span>
-                    <span className="font-medium text-gold-100">{recipe.difficulty}</span>
-                </div>
-                <div className="p-2 flex items-center justify-center">
-                    <Button 
-                        onClick={handleSave}
-                        disabled={isSaving}
+      <div className="max-w-5xl mx-auto mt-8 px-4 md:px-8">
+        {/* Header & Title */}
+        <div className="text-center mb-10">
+            <div className="flex justify-center gap-3 mb-6">
+                <span className="px-3 py-1 bg-gold-500/10 text-gold-400 border border-gold-500/20 text-[10px] font-bold uppercase tracking-[0.2em]">
+                    {recipe.category}
+                </span>
+                <span className="px-3 py-1 bg-deep-800 text-stone-400 border border-white/5 text-[10px] font-bold uppercase tracking-[0.2em]">
+                    {recipe.complexityRating}
+                </span>
+            </div>
+            <h1 className="font-display text-4xl md:text-6xl text-gold-100 leading-tight mb-6">
+                {recipe.title}
+            </h1>
+            <p className="font-serif text-lg text-stone-400 italic max-w-3xl mx-auto leading-relaxed">
+                {recipe.description}
+            </p>
+        </div>
+
+        {/* Media Section (Cinematic) */}
+        <div className="relative w-full aspect-video md:aspect-[21/9] bg-deep-800 rounded-sm overflow-hidden border border-white/5 mb-12 group shadow-2xl shadow-black">
+            {mediaView === 'image' ? (
+                recipe.imageUrl ? (
+                    <img 
+                        src={recipe.imageUrl} 
+                        alt={recipe.title} 
+                        className="w-full h-full object-cover transition-transform duration-[30s] group-hover:scale-105" 
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-600 italic font-serif">
+                        Revelando fotografia...
+                    </div>
+                )
+            ) : (
+                recipe.videoUrl ? (
+                    <video 
+                        src={recipe.videoUrl} 
+                        controls 
+                        autoPlay 
+                        className="w-full h-full object-cover" 
+                    />
+                ) : (
+                     <div className="w-full h-full flex items-center justify-center text-stone-600 italic font-serif">
+                        Vídeo indisponível
+                    </div>
+                )
+            )}
+
+            {/* Media Switcher */}
+            {recipe.videoUrl && (
+                <div className="absolute bottom-6 right-6 flex bg-black/60 backdrop-blur rounded-full p-1 border border-white/10 z-40">
+                    <button 
+                        onClick={() => setMediaView('image')}
                         className={cn(
-                            "w-full h-full uppercase tracking-widest text-xs font-bold transition-all",
-                            isSaved 
-                                ? "bg-gold-500 text-deep-900 hover:bg-white" 
-                                : "bg-transparent border border-gold-500/30 text-gold-400 hover:bg-gold-500 hover:text-deep-900"
+                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs uppercase tracking-widest font-bold",
+                            mediaView === 'image' ? "bg-gold-500 text-deep-900" : "text-stone-300 hover:text-white hover:bg-white/10"
                         )}
                     >
-                        {isSaved ? <><Check size={16} className="mr-2"/> Salvo</> : <><Save size={16} className="mr-2"/> Salvar</>}
-                    </Button>
+                        <ImageIcon size={14} />
+                        <span className="hidden md:inline">Foto</span>
+                    </button>
+                    <button 
+                            onClick={() => setMediaView('video')}
+                            className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs uppercase tracking-widest font-bold",
+                            mediaView === 'video' ? "bg-gold-500 text-deep-900" : "text-stone-300 hover:text-white hover:bg-white/10"
+                        )}
+                    >
+                        <PlayCircle size={14} />
+                        <span className="hidden md:inline">Vídeo</span>
+                    </button>
+                </div>
+            )}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 border-y border-white/5 py-6 mb-16">
+            <div className="flex flex-col items-center justify-center border-r border-white/5">
+                <div className="flex items-center gap-2 text-gold-500 mb-1">
+                    <Clock size={18} />
+                    <span className="text-[10px] uppercase tracking-widest hidden md:inline">Tempo de Preparo</span>
+                </div>
+                <span className="font-display text-xl md:text-2xl text-white">{recipe.prepTime}</span>
+            </div>
+            <div className="flex flex-col items-center justify-center border-r border-white/5">
+                <div className="flex items-center gap-2 text-gold-500 mb-1">
+                    <Users size={18} />
+                    <span className="text-[10px] uppercase tracking-widest hidden md:inline">Rendimento</span>
+                </div>
+                <span className="font-display text-xl md:text-2xl text-white">{recipe.portions}</span>
+            </div>
+            <div className="flex flex-col items-center justify-center">
+                <div className="flex items-center gap-2 text-gold-500 mb-1">
+                    <ChefHat size={18} />
+                    <span className="text-[10px] uppercase tracking-widest hidden md:inline">Dificuldade</span>
+                </div>
+                <span className="font-display text-xl md:text-2xl text-white">{recipe.difficulty}</span>
+            </div>
+        </div>
+
+        {/* Content Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+            
+            {/* Left Column: Ingredients & Notes */}
+            <div className="lg:col-span-4 space-y-12">
+                {/* Ingredients List */}
+                <div className="bg-deep-800/30 p-8 rounded-sm border border-white/5">
+                    <h3 className="font-display text-2xl text-gold-400 mb-8 flex items-center gap-3">
+                        <span>📜</span> Ingredientes
+                    </h3>
+                    <ul className="space-y-4">
+                        {recipe.ingredients?.map((ing: string, i: number) => (
+                            <li key={i} className="flex items-start gap-4 text-stone-300 font-light group">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gold-600 mt-2.5 flex-shrink-0 group-hover:bg-gold-400 transition-colors"></span>
+                                <span className="leading-relaxed text-sm">{ing}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                {/* Nutrition Facts */}
+                {recipe.macros && (
+                    <div className="p-6 border border-white/5 rounded-sm">
+                        <h4 className="text-xs uppercase tracking-[0.2em] text-stone-500 mb-6 text-center">Nutrição / Porção</h4>
+                        <div className="grid grid-cols-2 gap-y-6">
+                            <div className="text-center">
+                                <span className="block text-xl text-white font-display">{recipe.macros.calories}</span>
+                                <span className="text-[9px] text-gold-500 uppercase tracking-widest">Kcal</span>
+                            </div>
+                            <div className="text-center">
+                                <span className="block text-xl text-white font-display">{recipe.macros.protein}</span>
+                                <span className="text-[9px] text-gold-500 uppercase tracking-widest">Proteína</span>
+                            </div>
+                            <div className="text-center">
+                                <span className="block text-xl text-white font-display">{recipe.macros.carbs}</span>
+                                <span className="text-[9px] text-gold-500 uppercase tracking-widest">Carbs</span>
+                            </div>
+                            <div className="text-center">
+                                <span className="block text-xl text-white font-display">{recipe.macros.fat}</span>
+                                <span className="text-[9px] text-gold-500 uppercase tracking-widest">Gorduras</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Diet Tags */}
+                <div className="flex flex-wrap gap-2">
+                    {recipe.dietTags?.map((tag: string) => (
+                        <span key={tag} className="px-3 py-1.5 bg-white/5 text-stone-400 text-[10px] uppercase tracking-widest rounded border border-white/5">
+                            {tag}
+                        </span>
+                    ))}
                 </div>
             </div>
 
-            {/* Content Body */}
-            <div className="p-6 md:p-12 grid grid-cols-1 md:grid-cols-12 gap-12">
-                
-                {/* Ingredientes */}
-                <div className="md:col-span-4 space-y-8">
-                    <div>
-                        <h3 className="font-display text-2xl text-gold-400 mb-6 border-b border-gold-500/20 pb-2">Ingredientes</h3>
-                        <ul className="space-y-4 font-sans text-stone-300 font-light">
-                            {recipe.ingredients?.map((ing: string, i: number) => (
-                                <li key={i} className="flex items-start gap-3">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-gold-600 mt-2 flex-shrink-0"></span>
-                                    <span className="leading-relaxed">{ing}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Macros */}
-                    {recipe.macros && (
-                        <div className="p-6 bg-deep-900 rounded border border-white/5">
-                            <h4 className="text-xs uppercase tracking-widest text-stone-500 mb-4 text-center">Informação Nutricional</h4>
-                            <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                    <span className="block text-xl text-gold-100 font-display">{recipe.macros.calories}</span>
-                                    <span className="text-[10px] text-stone-500 uppercase">Calorias</span>
+            {/* Right Column: Instructions */}
+            <div className="lg:col-span-8 space-y-12">
+                <div>
+                    <h3 className="font-display text-3xl text-gold-100 mb-10 pb-4 border-b border-white/5">
+                        Mise en Place & Preparo
+                    </h3>
+                    <div className="space-y-12">
+                        {recipe.instructions?.map((step: string, i: number) => (
+                            <div key={i} className="group">
+                                <div className="flex items-baseline gap-6 mb-4">
+                                    <span className="flex-shrink-0 w-10 h-10 rounded-full border border-gold-500/30 text-gold-400 flex items-center justify-center font-display text-lg group-hover:bg-gold-500 group-hover:text-deep-900 transition-all shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                                        {i + 1}
+                                    </span>
+                                    <h4 className="text-lg text-gold-200 font-display pt-2">Passo {i + 1}</h4>
                                 </div>
-                                <div>
-                                    <span className="block text-xl text-gold-100 font-display">{recipe.macros.protein}</span>
-                                    <span className="text-[10px] text-stone-500 uppercase">Proteína</span>
-                                </div>
+                                <p className="text-stone-300 font-sans font-light leading-8 text-lg pl-16 border-l border-white/5 ml-5 group-hover:border-gold-500/30 transition-colors">
+                                    {step}
+                                </p>
                             </div>
-                        </div>
-                    )}
+                        ))}
+                    </div>
                 </div>
 
-                {/* Preparo */}
-                <div className="md:col-span-8 space-y-10">
-                    <div>
-                        <h3 className="font-display text-2xl text-gold-400 mb-6 border-b border-gold-500/20 pb-2">Modo de Preparo</h3>
-                        <div className="space-y-8">
-                            {recipe.instructions?.map((step: string, i: number) => (
-                                <div key={i} className="flex gap-6 group">
-                                    <div className="flex-shrink-0 flex flex-col items-center">
-                                        <span className="w-8 h-8 rounded-full border border-gold-500/30 text-gold-400 flex items-center justify-center font-display text-sm group-hover:bg-gold-500 group-hover:text-deep-900 transition-colors">
-                                            {i + 1}
-                                        </span>
-                                        {i !== recipe.instructions.length - 1 && <div className="w-px h-full bg-white/5 my-2 group-hover:bg-gold-500/20 transition-colors"></div>}
-                                    </div>
-                                    <p className="text-stone-300 font-light leading-relaxed pb-8">{step}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Dica do Chef */}
-                    <div className="p-6 bg-gradient-to-br from-deep-800 to-deep-900 border border-gold-500/20 rounded relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 text-6xl">👨‍🍳</div>
-                        <h4 className="font-display text-gold-300 mb-2 relative z-10">Toque do Chef</h4>
-                        <p className="font-serif italic text-stone-400 relative z-10">"{recipe.platingTips}"</p>
-                    </div>
+                {/* Chef's Note / Plating */}
+                <div className="mt-16 p-8 bg-gradient-to-r from-gold-900/20 to-transparent border-l-4 border-gold-500 rounded-r-sm relative">
+                    <div className="absolute -top-6 -left-2 text-6xl opacity-20 select-none">❝</div>
+                    <h4 className="text-gold-400 font-display text-xl mb-3 uppercase tracking-widest">O Toque do Chef</h4>
+                    <p className="font-serif text-xl italic text-stone-300 leading-relaxed">
+                        {recipe.platingTips}
+                    </p>
                 </div>
             </div>
         </div>
