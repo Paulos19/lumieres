@@ -42,6 +42,13 @@
     "portions": "Porzioni",
     "difficulty": "Difficoltà"
   },
+  "Categories": {
+    "starter": "Antipasto",
+    "appetizer": "Stuzzichino",
+    "main": "Piatto Principale",
+    "dessert": "Dessert",
+    "drink": "Bevanda Analcolica"
+  },
   "Modules": {
     "tradicao": {
       "title": "Festin Royal",

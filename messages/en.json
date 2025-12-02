@@ -42,6 +42,13 @@
     "portions": "Servings",
     "difficulty": "Difficulty"
   },
+  "Categories": {
+    "starter": "Starter",
+    "appetizer": "Appetizer",
+    "main": "Main Course",
+    "dessert": "Dessert",
+    "drink": "Non-Alcoholic Drink"
+  },
   "Modules": {
     "tradicao": {
       "title": "Festin Royal",

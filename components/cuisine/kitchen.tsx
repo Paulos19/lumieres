@@ -6,36 +6,41 @@ import { generateMenuAction, generateRecipeAction, generateMediaAction } from '@
 import { RecipeCard } from './recipe-card';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useLocale, useTranslations } from 'next-intl'; // Importações i18n
+import { useLocale, useTranslations } from 'next-intl';
 
-const CATEGORIES = [
-  'Entrada', 'Petisco', 'Prato Principal', 'Sobremesa', 'Bebida Não Alcoólica'
-];
+// Usamos chaves internas para mapear com o arquivo JSON
+const CATEGORY_KEYS = [
+  'starter', 'appetizer', 'main', 'dessert', 'drink'
+] as const;
 
 interface KitchenProps {
   module: ModuleConfig;
 }
 
 export const Kitchen = ({ module }: KitchenProps) => {
-  const locale = useLocale(); // Obtém o idioma atual (pt, en, fr...)
-  const t = useTranslations('Cuisine'); // Hooks para textos da UI
+  const locale = useLocale();
+  const t = useTranslations('Cuisine');
+  const tCat = useTranslations('Categories'); // Novo hook para categorias
   
   const [view, setView] = useState<'CATEGORIES' | 'MENU_LIST' | 'RECIPE_DETAIL'>('CATEGORIES');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(''); // Guarda o nome traduzido para passar pra IA
   const [menuList, setMenuList] = useState<any[]>([]);
   const [currentRecipe, setCurrentRecipe] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [activeTab, setActiveTab] = useState<'Simples' | 'Elaborada'>('Simples');
 
-  const handleCategorySelect = async (category: string) => {
-    setSelectedCategory(category);
+  const handleCategorySelect = async (categoryKey: string) => {
+    // Pegamos a tradução real (ex: "Entrée" ou "Starter")
+    const translatedCategory = tCat(categoryKey);
+    
+    setSelectedCategory(translatedCategory);
     setLoading(true);
-    setLoadingText(t('preparing')); // Usa texto traduzido para "Carregando..."
+    setLoadingText(t('preparing'));
     
     try {
-      // Passa o locale para a action
-      const data = await generateMenuAction(module.promptModifier, category, locale);
+      // Passamos a categoria traduzida para a IA
+      const data = await generateMenuAction(module.promptModifier, translatedCategory, locale);
       if (data?.recipes) {
         setMenuList(data.recipes);
         setView('MENU_LIST');
@@ -54,10 +59,8 @@ export const Kitchen = ({ module }: KitchenProps) => {
     setLoadingText(t('preparing'));
     
     try {
-      // 1. Gera texto da receita (Passando locale)
       const recipe = await generateRecipeAction(summary.title, module.promptModifier, selectedCategory, locale);
       
-      // 2. Gera Mídia (Passando locale para o n8n)
       setLoadingText(t('generating_visuals'));
       const media = await generateMediaAction(summary.title, recipe.visualDescription, locale);
       
@@ -106,20 +109,23 @@ export const Kitchen = ({ module }: KitchenProps) => {
                 <p className="text-stone-400 text-center mb-12 font-serif italic">{t('select_category')}</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {CATEGORIES.map((cat) => (
+                    {CATEGORY_KEYS.map((key) => (
                         <button
-                            key={cat}
-                            onClick={() => handleCategorySelect(cat)}
+                            key={key}
+                            onClick={() => handleCategorySelect(key)}
                             className="group relative h-64 border border-white/5 hover:border-gold-500/50 rounded-sm overflow-hidden transition-all hover:-translate-y-2"
                         >
                             <div className="absolute inset-0 bg-deep-800 group-hover:bg-deep-900 transition-colors"></div>
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10">
                                 <span className="font-serif text-4xl text-stone-600 group-hover:text-gold-300 mb-4 transition-colors">
-                                    {cat === 'Entrada' ? '🥗' : cat === 'Petisco' ? '🍢' : cat === 'Prato Principal' ? '🥘' : cat === 'Sobremesa' ? '🍰' : '🍹'}
+                                    {/* Ícones baseados na chave */}
+                                    {key === 'starter' ? '🥗' : 
+                                     key === 'appetizer' ? '🍢' : 
+                                     key === 'main' ? '🥘' : 
+                                     key === 'dessert' ? '🍰' : '🍹'}
                                 </span>
-                                {/* Aqui poderíamos traduzir as categorias estáticas também se desejado, usando t(cat) */}
                                 <span className="font-sans uppercase tracking-widest text-sm font-bold text-stone-300 group-hover:text-white text-center">
-                                    {cat}
+                                    {tCat(key)} {/* Texto Traduzido */}
                                 </span>
                             </div>
                         </button>

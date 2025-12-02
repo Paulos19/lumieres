@@ -1,4 +1,5 @@
-import Link from "next/link";
+// CORREÇÃO: Importar o Link do nosso roteamento i18n, não do next/link
+import { Link } from "@/i18n/routing"; 
 import { ModuleConfig } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 

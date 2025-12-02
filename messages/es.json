@@ -42,6 +42,13 @@
     "portions": "Porciones",
     "difficulty": "Dificultad"
   },
+  "Categories": {
+    "starter": "Entrante",
+    "appetizer": "Aperitivo",
+    "main": "Plato Principal",
+    "dessert": "Postre",
+    "drink": "Bebida Sin Alcohol"
+  },
   "Modules": {
     "tradicao": {
       "title": "Festin Royal",
