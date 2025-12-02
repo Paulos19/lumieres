@@ -52,13 +52,21 @@ export const Kitchen = ({ module }: KitchenProps) => {
       // 1. Gera texto
       const recipe = await generateRecipeAction(summary.title, module.promptModifier, selectedCategory);
       
-      // 2. Tenta gerar imagem (async, não bloqueia UI totalmente se demorar muito, mas aqui vamos esperar)
+      // 2. Tenta gerar imagem
       setLoadingText("Finalizando empratamento (Foto)...");
       const imageUrl = await generateImageAction(recipe.visualDescription);
       
-      setCurrentRecipe({ ...recipe, id: summary.id, imageUrl });
+      // CORREÇÃO: Injetamos a 'category' aqui para garantir que ela exista ao salvar no banco
+      setCurrentRecipe({ 
+        ...recipe, 
+        id: summary.id, 
+        imageUrl, 
+        category: selectedCategory 
+      });
+      
       setView('RECIPE_DETAIL');
     } catch (e) {
+      console.error(e);
       toast.error("Erro ao detalhar a receita.");
     } finally {
       setLoading(false);
