@@ -2,10 +2,18 @@
 
 import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { auth } from "@/auth";
+import { put } from "@vercel/blob";
 
+// Inicialização do cliente Gemini
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Schemas (Mesmos do projeto original, adaptados para o SDK)
+// Variáveis de ambiente para o n8n
+const N8N_WEBHOOK_URL = process.env.N8N_IMAGE_WEBHOOK_URL;
+const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
+
+// --- SCHEMAS ESTRUTURADOS ---
+
+// 1. Schema para o Catálogo de Sugestões (Menu)
 const catalogSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -26,6 +34,7 @@ const catalogSchema: Schema = {
   }
 };
 
+// 2. Schema para a Receita Completa
 const recipeSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -55,20 +64,26 @@ const recipeSchema: Schema = {
   required: ["title", "description", "ingredients", "instructions", "visualDescription"]
 };
 
-// --- ACTIONS ---
+// --- SERVER ACTIONS ---
 
+/**
+ * Gera um menu com sugestões de pratos baseado no módulo e categoria.
+ */
 export async function generateMenuAction(moduleModifier: string, category: string) {
   const session = await auth();
   if (!session) throw new Error("Unauthorized");
 
   const prompt = `
     Atue como um Chef Executivo de classe mundial.
-    Contexto: ${moduleModifier}
-    Categoria: ${category}
+    Contexto do Módulo: ${moduleModifier}
+    Categoria Solicitada: ${category}
     
-    Gere 20 sugestões de pratos.
-    Divida RIGOROSAMENTE: 10 'Simples' e 10 'Elaborada'.
-    Retorne JSON.
+    Gere EXATAMENTE 20 sugestões de pratos exclusivos.
+    A lista deve ser dividida RIGOROSAMENTE em:
+    - 10 opções estilo 'Simples' (Comfort Food / Tradicional)
+    - 10 opções estilo 'Elaborada' (Alta Gastronomia / Michelin)
+    
+    Retorne apenas o JSON seguindo o schema.
   `;
 
   try {
@@ -82,24 +97,29 @@ export async function generateMenuAction(moduleModifier: string, category: strin
     });
     return JSON.parse(result.text || "{}");
   } catch (error) {
-    console.error("AI Error:", error);
+    console.error("AI Menu Error:", error);
     return { recipes: [] };
   }
 }
 
+/**
+ * Gera os detalhes completos de uma receita específica.
+ */
 export async function generateRecipeAction(title: string, moduleModifier: string, category: string) {
   const session = await auth();
   if (!session) throw new Error("Unauthorized");
 
   const prompt = `
-    Crie a receita completa para: "${title}".
+    Crie a receita completa e detalhada para o prato: "${title}".
     Contexto: ${moduleModifier}
     Categoria: ${category}
     
     Requisitos:
-    1. Visual ultra-realista na descrição.
-    2. Passos claros.
-    3. JSON estrito.
+    1. A 'visualDescription' deve ser um prompt de fotografia (em inglês ou português) extremamente detalhado para gerar uma imagem depois.
+    2. As instruções devem ser claras e profissionais.
+    3. Inclua macros aproximados.
+    
+    Retorne JSON estrito.
   `;
 
   try {
@@ -118,31 +138,83 @@ export async function generateRecipeAction(title: string, moduleModifier: string
   }
 }
 
-export async function generateImageAction(description: string) {
+/**
+ * Orquestra a geração de mídia (Imagem) via n8n e faz upload para o Vercel Blob.
+ */
+export async function generateMediaAction(recipeTitle: string, visualDescription: string) {
   const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const prompt = `
-    Fotografia Gastronômica Profissional, Capa de Revista Vogue Living.
-    ${description}
-    Iluminação de estúdio, 8k, ultra-realista.
-  `;
+  // Validação de configuração
+  if (!N8N_WEBHOOK_URL) {
+    console.warn("N8N Webhook URL not configured. Using placeholder.");
+    return {
+      imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent(recipeTitle)}`,
+      videoUrl: null
+    };
+  }
 
   try {
-    // Usando modelo de imagem (verifique se sua key tem acesso, senão use o flash padrão com descrição)
-    const result = await client.models.generateContent({
-      model: 'gemini-2.5-flash', // Flash é multimodal, pode tentar descrever, mas para gerar imagem real precisa do modelo específico (ex: imagen-3) ou hackear o flash (não gera img nativa). 
-      // NOTA: O SDK @google/genai suporta geração de imagem em modelos específicos. 
-      // Vou usar um placeholder aqui se o modelo de imagem não estiver disponível, 
-      // mas o ideal é 'imagen-3.0-generate-001' se disponível na sua conta.
-      // Para este exemplo, vamos simular o retorno base64 ou usar placeholder se falhar.
-      contents: prompt,
+    console.log(`[AI] Solicitando imagem para: ${recipeTitle}`);
+
+    // 1. Chamada ao n8n (que vai refinar o prompt e gerar a imagem)
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        recipeTitle,
+        visualDescription
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`N8N Error: ${response.status} - ${response.statusText}`);
+    }
+
+    const data = await response.json();
     
-    // Como o Gemini Flash retorna texto, vamos usar um serviço externo ou placeholder para garantir que funcione sem key especial de imagem agora.
-    // EM PRODUÇÃO: Substituir por chamada real ao Imagen 3
-    return `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent("Foto IA Gerada")}`;
+    // O n8n deve retornar { base64: "data:image/png;base64,..." }
+    if (!data.base64) {
+      throw new Error("O n8n não retornou a propriedade 'base64' esperada.");
+    }
+
+    console.log("[AI] Imagem recebida do n8n. Iniciando upload para Vercel Blob...");
+
+    // 2. Processar o Base64
+    // Remove o prefixo "data:image/png;base64," se existir para criar o buffer
+    const base64Data = data.base64.includes('base64,') 
+      ? data.base64.split('base64,')[1] 
+      : data.base64;
+      
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // 3. Gerar nome de arquivo único e organizado
+    // Ex: recipes/user_123/1715620000-titulo-da-receita.png
+    const cleanTitle = recipeTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 50);
+    const filename = `recipes/${session.user.id}/${Date.now()}-${cleanTitle}.png`;
+
+    // 4. Upload para Vercel Blob
+    const blob = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'image/png', // Ajuste se o n8n retornar outro formato (ex: jpeg)
+    });
+
+    console.log("[AI] Upload concluído:", blob.url);
+
+    return {
+      imageUrl: blob.url,
+      videoUrl: null // Preparado para expansão futura (vídeo)
+    };
+
   } catch (error) {
-    return null;
+    console.error("Media Pipeline Failed:", error);
+    // Retorna fallback em caso de erro para não quebrar a UI do usuário
+    return {
+      imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent("Erro na Geração")}`,
+      videoUrl: null
+    };
   }
 }
