@@ -23,10 +23,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  recipes       Recipe[]
-  preferences   UserPreference?
+  accounts    Account[]
+  sessions    Session[]
+  recipes     Recipe[]
+  preferences UserPreference?
 }
 
 model Account {
@@ -58,33 +58,38 @@ model Session {
 
 // Armazena as preferências do Onboarding (Onboarding.tsx)
 model UserPreference {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weight        Float? // Opcional
+  height        Float? // Opcional
+  goal          String? // Ex: "perder_peso", "ganhar_massa", "manutencao"
+  activityLevel String? // Ex: "sedentario", "ativo"
+
   guestCount        Int
-  budget            String   // Baixo, Médio, Luxo
-  difficulty        String   // Iniciante, Intermediário, Chef
+  budget            String // Baixo, Médio, Luxo
+  difficulty        String // Iniciante, Intermediário, Chef
   availableTime     String
   restrictions      String[] // Array de Strings (Postgres suporta nativamente)
   functionalFilters String[] // Ex: Anti-Inflamatório, Renal, etc.
 }
 
 model Recipe {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  title           String
-  description     String?
-  category        String   // Entrada, Prato Principal, etc.
-  imageUrl        String?
-  videoUrl        String?
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  category    String // Entrada, Prato Principal, etc.
+  imageUrl    String?
+  videoUrl    String?
+
   // Guardamos o JSON completo gerado pela IA para flexibilidade
-  fullContentJson Json     
-  
-  createdAt       DateTime @default(now())
+  fullContentJson Json
+
+  createdAt DateTime @default(now())
 
   @@index([userId])
 }

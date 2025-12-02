@@ -6,6 +6,7 @@ import { put } from "@vercel/blob";
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const N8N_PERSONAL_CHEF_WEBHOOK = process.env.N8N_PERSONAL_CHEF_WEBHOOK_URL;
 const N8N_VIDEO_WEBHOOK_URL = process.env.N8N_VIDEO_WEBHOOK_URL;
 const N8N_WEBHOOK_URL = process.env.N8N_IMAGE_WEBHOOK_URL;
 const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
@@ -267,5 +268,48 @@ export async function generateStepVideoAction(stepText: string, recipeTitle: str
   } catch (error) {
     console.error("Video Pipeline Failed:", error);
     return { videoUrl: null };
+  }
+}
+
+export async function generatePersonalizedRecipeAction(formData: any, locale: string) {
+  const session = await auth();
+  if (!session) throw new Error("Unauthorized");
+
+  // Validação básica se necessário (pode usar Zod aqui também)
+
+  if (!N8N_PERSONAL_CHEF_WEBHOOK) {
+    throw new Error("Webhook do Personal Chef não configurado.");
+  }
+
+  try {
+    console.log(`[AI Personal Chef] Solicitando receita personalizada para ${session.user?.email}...`);
+
+    const response = await fetch(N8N_PERSONAL_CHEF_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.N8N_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        ...formData, // peso, altura, ingredientes, objetivo
+        locale,
+        userId: session?.user?.id,
+        userName: session?.user?.name
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`N8N Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // O n8n deve retornar um JSON com a estrutura da receita + imagem gerada
+    // Ex: { recipe: { title: "...", ingredients: [...] }, imageUrl: "..." }
+    return data;
+
+  } catch (error) {
+    console.error("Personal Chef Pipeline Failed:", error);
+    throw new Error("Falha ao criar sua receita personalizada.");
   }
 }
