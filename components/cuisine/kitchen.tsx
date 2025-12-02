@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ModuleConfig } from '@/lib/constants';
-import { generateMenuAction, generateRecipeAction, generateImageAction } from '@/actions/ai';
+import { generateMenuAction, generateRecipeAction, generateMediaAction } from '@/actions/ai';
 import { RecipeCard } from './recipe-card';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -49,25 +49,27 @@ export const Kitchen = ({ module }: KitchenProps) => {
     setLoadingText(`Preparando mise en place para "${summary.title}"...`);
     
     try {
-      // 1. Gera texto
+      // 1. Gera texto da receita (Server Action)
       const recipe = await generateRecipeAction(summary.title, module.promptModifier, selectedCategory);
       
-      // 2. Tenta gerar imagem
-      setLoadingText("Finalizando empratamento (Foto)...");
-      const imageUrl = await generateImageAction(recipe.visualDescription);
+      // 2. Gera Mídia via n8n (Server Action)
+      setLoadingText("Finalizando produção visual (IA)...");
       
-      // CORREÇÃO: Injetamos a 'category' aqui para garantir que ela exista ao salvar no banco
+      // ATUALIZADO: Usa generateMediaAction em vez de generateImageAction
+      const media = await generateMediaAction(summary.title, recipe.visualDescription);
+      
       setCurrentRecipe({ 
         ...recipe, 
         id: summary.id, 
-        imageUrl, 
+        imageUrl: media.imageUrl, 
+        videoUrl: media.videoUrl, // Novo campo suportado
         category: selectedCategory 
       });
       
       setView('RECIPE_DETAIL');
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao detalhar a receita.");
+      toast.error("Erro ao gerar receita completa.");
     } finally {
       setLoading(false);
     }
