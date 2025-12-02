@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  CONCIERGE // Plano pago futuro
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  plan          Plan      @default(FREE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  recipes       Recipe[]
+  preferences   UserPreference?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Armazena as preferências do Onboarding (Onboarding.tsx)
+model UserPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  guestCount        Int
+  budget            String   // Baixo, Médio, Luxo
+  difficulty        String   // Iniciante, Intermediário, Chef
+  availableTime     String
+  restrictions      String[] // Array de Strings (Postgres suporta nativamente)
+  functionalFilters String[] // Ex: Anti-Inflamatório, Renal, etc.
+}
+
+model Recipe {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?
+  category        String   // Entrada, Prato Principal, etc.
+  imageUrl        String?
+  videoUrl        String?
+  
+  // Guardamos o JSON completo gerado pela IA para flexibilidade
+  fullContentJson Json     
+  
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
