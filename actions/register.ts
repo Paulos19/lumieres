@@ -12,7 +12,8 @@ const registerSchema = z.object({
   password: z.string().min(6, "Mínimo de 6 caracteres"),
 });
 
-export const register = async (values: z.infer<typeof registerSchema>) => {
+// Adicionamos o parâmetro locale
+export const register = async (values: z.infer<typeof registerSchema>, locale: string = "pt") => {
   const validatedFields = registerSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -39,18 +40,18 @@ export const register = async (values: z.infer<typeof registerSchema>) => {
     },
   });
   
-  // Tentar login automático após registro
   try {
       await signIn("credentials", {
         email,
         password,
-        redirectTo: "/dashboard", // Redireciona para o dashboard inicial
+        // CORREÇÃO: Redireciona para o caminho com o idioma correto
+        redirectTo: `/${locale}/atelier`, 
       });
   } catch (error) {
       if (error instanceof AuthError) {
           return { error: "Conta criada, mas erro ao logar automaticamente." }
       }
-      throw error; // Necessário para o redirect do Next funcionar
+      throw error;
   }
 
   return { success: "Conta criada com sucesso!" };

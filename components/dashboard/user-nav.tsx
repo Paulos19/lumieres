@@ -1,7 +1,11 @@
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 
-export async function UserNav() {
+interface UserNavProps {
+  locale: string;
+}
+
+export async function UserNav({ locale }: UserNavProps) {
   const session = await auth();
   const user = session?.user;
 
@@ -15,7 +19,8 @@ export async function UserNav() {
       <form
         action={async () => {
           "use server";
-          await signOut({ redirectTo: "/login" });
+          // CORREÇÃO: Redirecionar para a rota localizada
+          await signOut({ redirectTo: `/${locale}/login` });
         }}
       >
         <Button 

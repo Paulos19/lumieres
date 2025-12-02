@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/form";
 import { CardWrapper } from "./card-wrapper";
 import { Button } from "@/components/ui/button";
-import { signIn } from "next-auth/react"; // Client side sign-in
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useRouter } from "@/i18n/routing"; // <--- CORREÇÃO IMPORTANTE
 
 const LoginSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -26,7 +26,7 @@ const LoginSchema = z.object({
 export const LoginForm = () => {
   const [error, setError] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
+  const router = useRouter(); // Esse router agora sabe o idioma atual
 
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
@@ -41,13 +41,14 @@ export const LoginForm = () => {
             const result = await signIn("credentials", {
                 email: values.email,
                 password: values.password,
-                redirect: false, // Vamos controlar o redirect manualmente para evitar recargas
+                redirect: false,
             });
 
             if (result?.error) {
                 setError("Credenciais inválidas.");
             } else {
-                router.push("/atelier"); // Rota pós-login
+                // CORREÇÃO: O router do next-intl vai adicionar o locale (ex: /pt/atelier)
+                router.push("/atelier");
                 router.refresh();
             }
         } catch (e) {

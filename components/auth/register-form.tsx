@@ -16,9 +16,10 @@ import {
 import { CardWrapper } from "./card-wrapper";
 import { Button } from "@/components/ui/button";
 import { register } from "@/actions/register"; // Server Action
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing"; // Router com suporte a i18n
+import { useLocale } from "next-intl"; // Hook para pegar o idioma atual
 
-// Schema de validação igual ao do Server Action
+// Schema de validação
 const RegisterSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório" }),
   email: z.string().email({ message: "Email inválido" }),
@@ -29,7 +30,9 @@ export const RegisterForm = () => {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
+  
   const router = useRouter();
+  const locale = useLocale(); // 'pt', 'en', 'fr', etc.
 
   const form = useForm<z.infer<typeof RegisterSchema>>({
     resolver: zodResolver(RegisterSchema),
@@ -45,14 +48,15 @@ export const RegisterForm = () => {
     setSuccess("");
 
     startTransition(() => {
-      register(values).then((data) => {
+      // Passamos o locale para a action saber para onde redirecionar após o login
+      register(values, locale).then((data) => {
         if (data.error) {
           setError(data.error);
         } else {
           setSuccess(data.success);
-          // O register action já tenta fazer o login, 
-          // mas forçamos o refresh/redirect aqui para garantir
-          router.push("/atelier");
+          // O register action já tenta fazer o login e redirecionar,
+          // mas mantemos isso aqui como fallback ou para feedback visual
+          router.push("/atelier"); 
         }
       });
     });
