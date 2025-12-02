@@ -1,0 +1,60 @@
+{
+  "Common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "saved": "Salvo",
+    "back": "Voltar",
+    "error": "Erro",
+    "language": "Idioma"
+  },
+  "Landing": {
+    "title": "LUMIÈRE FESTIN",
+    "subtitle": "Onde a inteligência artificial encontra a alta gastronomia.",
+    "email_label": "Seu convite exclusivo (Email)",
+    "email_placeholder": "chef@exemplo.com",
+    "password_label": "Senha",
+    "cta_button": "Entrar no Atelier",
+    "register_link": "Ainda não tem convite? Cadastre-se",
+    "footer": "Experiência Digital Premium"
+  },
+  "Dashboard": {
+    "welcome": "Bonjour, {name}",
+    "subtitle": "Selecione uma inspiração abaixo para começar a criar sua próxima obra-prima gastronômica.",
+    "atelier": "Atelier",
+    "my_recipes": "Minhas Receitas",
+    "logout": "Sair",
+    "empty_collection": "Sua coleção está vazia",
+    "empty_desc": "Visite o Atelier para descobrir novas inspirações."
+  },
+  "Cuisine": {
+    "back_categories": "Voltar para Categorias",
+    "what_to_serve": "O que deseja servir?",
+    "select_category": "Selecione uma categoria para ver as sugestões do Chef",
+    "preparing": "Preparando mise en place...",
+    "generating_visuals": "Finalizando produção visual...",
+    "ingredients": "Ingredientes",
+    "preparation": "Modo de Preparo",
+    "nutrition": "Nutrição / Porção",
+    "chefs_note": "O Toque do Chef",
+    "time": "Tempo",
+    "portions": "Porções",
+    "difficulty": "Dificuldade"
+  },
+  "Modules": {
+    "tradicao": {
+      "title": "Festin Royal",
+      "subtitle": "A Tradição Clássica Mundial",
+      "description": "Receitas opulentas de Natal e Ano Novo ao estilo europeu e americano."
+    },
+    "brasileiro": {
+      "title": "Héritage Tropical",
+      "subtitle": "Clássicos Brasileiros",
+      "description": "A alma do Natal brasileiro elevada ao nível de estrela Michelin."
+    },
+    "gourmet": {
+      "title": "L'Or Noir",
+      "subtitle": "Alta Gastronomia Refinada",
+      "description": "Ingredientes raros, técnicas moleculares e empratamentos artísticos."
+    }
+  }
+}

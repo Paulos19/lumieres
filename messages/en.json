@@ -1,0 +1,60 @@
+{
+  "Common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "saved": "Saved",
+    "back": "Back",
+    "error": "Error",
+    "language": "Language"
+  },
+  "Landing": {
+    "title": "LUMIÈRE FESTIN",
+    "subtitle": "Where artificial intelligence meets haute cuisine.",
+    "email_label": "Your exclusive invitation (Email)",
+    "email_placeholder": "chef@example.com",
+    "password_label": "Password",
+    "cta_button": "Enter the Atelier",
+    "register_link": "No invitation yet? Sign up",
+    "footer": "Premium Digital Experience"
+  },
+  "Dashboard": {
+    "welcome": "Hello, {name}",
+    "subtitle": "Select an inspiration below to start creating your next gastronomic masterpiece.",
+    "atelier": "Atelier",
+    "my_recipes": "My Recipes",
+    "logout": "Logout",
+    "empty_collection": "Your collection is empty",
+    "empty_desc": "Visit the Atelier to discover new inspirations."
+  },
+  "Cuisine": {
+    "back_categories": "Back to Categories",
+    "what_to_serve": "What do you wish to serve?",
+    "select_category": "Select a category to see the Chef's suggestions",
+    "preparing": "Preparing mise en place...",
+    "generating_visuals": "Finalizing visual production...",
+    "ingredients": "Ingredients",
+    "preparation": "Method",
+    "nutrition": "Nutrition / Serving",
+    "chefs_note": "Chef's Touch",
+    "time": "Time",
+    "portions": "Servings",
+    "difficulty": "Difficulty"
+  },
+  "Modules": {
+    "tradicao": {
+      "title": "Festin Royal",
+      "subtitle": "Classic World Tradition",
+      "description": "Opulent Christmas and New Year recipes in European and American styles."
+    },
+    "brasileiro": {
+      "title": "Héritage Tropical",
+      "subtitle": "Brazilian Classics",
+      "description": "The soul of Brazilian Christmas elevated to Michelin star level."
+    },
+    "gourmet": {
+      "title": "L'Or Noir",
+      "subtitle": "Refined Haute Cuisine",
+      "description": "Rare ingredients, molecular techniques, and artistic plating."
+    }
+  }
+}

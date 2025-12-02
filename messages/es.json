@@ -1,0 +1,60 @@
+{
+  "Common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "saved": "Guardado",
+    "back": "Volver",
+    "error": "Error",
+    "language": "Idioma"
+  },
+  "Landing": {
+    "title": "LUMIÈRE FESTIN",
+    "subtitle": "Donde la inteligencia artificial se encuentra con la alta gastronomía.",
+    "email_label": "Tu invitación exclusiva (Email)",
+    "email_placeholder": "chef@ejemplo.com",
+    "password_label": "Contraseña",
+    "cta_button": "Entrar al Atelier",
+    "register_link": "¿Aún no tienes invitación? Regístrate",
+    "footer": "Experiencia Digital Premium"
+  },
+  "Dashboard": {
+    "welcome": "Hola, {name}",
+    "subtitle": "Selecciona una inspiración abajo para comenzar a crear tu próxima obra maestra gastronómica.",
+    "atelier": "Atelier",
+    "my_recipes": "Mis Recetas",
+    "logout": "Salir",
+    "empty_collection": "Tu colección está vacía",
+    "empty_desc": "Visita el Atelier para descubrir nuevas inspiraciones."
+  },
+  "Cuisine": {
+    "back_categories": "Volver a Categorías",
+    "what_to_serve": "¿Qué deseas servir?",
+    "select_category": "Selecciona una categoría para ver las sugerencias del Chef",
+    "preparing": "Preparando mise en place...",
+    "generating_visuals": "Finalizando producción visual...",
+    "ingredients": "Ingredientes",
+    "preparation": "Preparación",
+    "nutrition": "Nutrición / Porción",
+    "chefs_note": "El Toque del Chef",
+    "time": "Tiempo",
+    "portions": "Porciones",
+    "difficulty": "Dificultad"
+  },
+  "Modules": {
+    "tradicao": {
+      "title": "Festin Royal",
+      "subtitle": "La Tradición Clásica Mundial",
+      "description": "Recetas opulentas de Navidad y Año Nuevo al estilo europeo y americano."
+    },
+    "brasileiro": {
+      "title": "Héritage Tropical",
+      "subtitle": "Clásicos Brasileños",
+      "description": "El alma de la Navidad brasileña elevada al nivel de estrella Michelin."
+    },
+    "gourmet": {
+      "title": "L'Or Noir",
+      "subtitle": "Alta Gastronomía Refinada",
+      "description": "Ingredientes raros, técnicas moleculares y emplatado artístico."
+    }
+  }
+}

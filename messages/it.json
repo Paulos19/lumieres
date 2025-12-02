@@ -1,0 +1,60 @@
+{
+  "Common": {
+    "loading": "Caricamento...",
+    "save": "Salva",
+    "saved": "Salvato",
+    "back": "Indietro",
+    "error": "Errore",
+    "language": "Lingua"
+  },
+  "Landing": {
+    "title": "LUMIÈRE FESTIN",
+    "subtitle": "Dove l'intelligenza artificiale incontra l'alta cucina.",
+    "email_label": "Il tuo invito esclusivo (Email)",
+    "email_placeholder": "chef@esempio.com",
+    "password_label": "Password",
+    "cta_button": "Entra nell'Atelier",
+    "register_link": "Non hai ancora un invito? Iscriviti",
+    "footer": "Esperienza Digitale Premium"
+  },
+  "Dashboard": {
+    "welcome": "Ciao, {name}",
+    "subtitle": "Seleziona un'ispirazione qui sotto per iniziare a creare il tuo prossimo capolavoro gastronomico.",
+    "atelier": "Atelier",
+    "my_recipes": "Le Mie Ricette",
+    "logout": "Esci",
+    "empty_collection": "La tua collezione è vuota",
+    "empty_desc": "Visita l'Atelier per scoprire nuove ispirazioni."
+  },
+  "Cuisine": {
+    "back_categories": "Torna alle Categorie",
+    "what_to_serve": "Cosa desideri servire?",
+    "select_category": "Seleziona una categoria per vedere i suggerimenti dello Chef",
+    "preparing": "Preparazione mise en place...",
+    "generating_visuals": "Finalizzazione produzione visiva...",
+    "ingredients": "Ingredienti",
+    "preparation": "Preparazione",
+    "nutrition": "Nutrizione / Porzione",
+    "chefs_note": "Il Tocco dello Chef",
+    "time": "Tempo",
+    "portions": "Porzioni",
+    "difficulty": "Difficoltà"
+  },
+  "Modules": {
+    "tradicao": {
+      "title": "Festin Royal",
+      "subtitle": "La Tradizione Classica Mondiale",
+      "description": "Ricette opulente di Natale e Capodanno in stile europeo e americano."
+    },
+    "brasileiro": {
+      "title": "Héritage Tropical",
+      "subtitle": "Classici Brasiliani",
+      "description": "L'anima del Natale brasiliano elevata al livello di stella Michelin."
+    },
+    "gourmet": {
+      "title": "L'Or Noir",
+      "subtitle": "Alta Cucina Raffinata",
+      "description": "Ingredienti rari, tecniche molecolari e impiattamento artistico."
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "Common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "back": "Retour",
+    "error": "Erreur",
+    "language": "Langue"
+  },
+  "Landing": {
+    "title": "LUMIÈRE FESTIN",
+    "subtitle": "Où l'intelligence artificielle rencontre la haute gastronomie.",
+    "email_label": "Votre invitation exclusive (Email)",
+    "email_placeholder": "chef@exemple.com",
+    "password_label": "Mot de passe",
+    "cta_button": "Entrer dans l'Atelier",
+    "register_link": "Pas encore d'invitation ? S'inscrire",
+    "footer": "Expérience Numérique Premium"
+  },
+  "Dashboard": {
+    "welcome": "Bonjour, {name}",
+    "subtitle": "Sélectionnez une inspiration ci-dessous pour commencer à créer votre prochain chef-d'œuvre.",
+    "atelier": "Atelier",
+    "my_recipes": "Mes Recettes",
+    "logout": "Se déconnecter",
+    "empty_collection": "Votre collection est vide",
+    "empty_desc": "Visitez l'Atelier pour découvrir de nouvelles inspirations."
+  },
+  "Cuisine": {
+    "back_categories": "Retour aux Catégories",
+    "what_to_serve": "Que souhaitez-vous servir ?",
+    "select_category": "Sélectionnez une catégorie pour voir les suggestions du Chef",
+    "preparing": "Préparation de la mise en place...",
+    "generating_visuals": "Finalisation de la production visuelle...",
+    "ingredients": "Ingrédients",
+    "preparation": "Préparation",
+    "nutrition": "Nutrition / Portion",
+    "chefs_note": "La Touche du Chef",
+    "time": "Temps",
+    "portions": "Portions",
+    "difficulty": "Difficulté"
+  },
+  "Modules": {
+    "tradicao": {
+      "title": "Festin Royal",
+      "subtitle": "La Tradition Classique Mondiale",
+      "description": "Recettes opulentes de Noël et du Nouvel An dans les styles européen et américain."
+    },
+    "brasileiro": {
+      "title": "Héritage Tropical",
+      "subtitle": "Classiques Brésiliens",
+      "description": "L'âme du Noël brésilien élevée au niveau d'une étoile Michelin."
+    },
+    "gourmet": {
+      "title": "L'Or Noir",
+      "subtitle": "Haute Gastronomie Raffinée",
+      "description": "Ingrédients rares, techniques moléculaires et dressage artistique."
+    }
+  }
+}
