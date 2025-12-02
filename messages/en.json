@@ -24,7 +24,9 @@
     "my_recipes": "My Recipes",
     "logout": "Logout",
     "empty_collection": "Your collection is empty",
-    "empty_desc": "Visit the Atelier to discover new inspirations."
+    "empty_desc": "Visit the Atelier to discover new inspirations.",
+    "collection_title": "My Private Collection",
+    "collection_subtitle": "Your selected dishes, saved and ready for service."
   },
   "Cuisine": {
     "back_categories": "Back to Categories",
@@ -55,6 +57,56 @@
       "title": "L'Or Noir",
       "subtitle": "Refined Haute Cuisine",
       "description": "Rare ingredients, molecular techniques, and artistic plating."
+    },
+    "gluten_free": {
+      "title": "Liberté (Gluten Free)",
+      "subtitle": "Celiacs & Gluten Free",
+      "description": "Total safety for celiacs. Festive baking and pasta without wheat."
+    },
+    "lactose_free": {
+      "title": "Légèreté (Dairy Free)",
+      "subtitle": "Lactose Intolerant",
+      "description": "Rich creams, sauces, and desserts using premium plant-based milks."
+    },
+    "keto": {
+      "title": "Cétogène Chic",
+      "subtitle": "Low Carb & Keto",
+      "description": "Low carb, healthy fats, and noble proteins. Guilt-free feasting."
+    },
+    "sugar_free": {
+      "title": "Douceur Absolue",
+      "subtitle": "Sugar Free",
+      "description": "Sweetness from nature. Incredible desserts without refined sugar."
+    },
+    "hipertensos": {
+      "title": "Coeur Sain",
+      "subtitle": "Low Sodium",
+      "description": "Explosion of flavor through spices and herbs, without relying on salt."
+    },
+    "vegano": {
+      "title": "Jardin Pur",
+      "subtitle": "Strictly Vegan",
+      "description": "100% Plant-Based. A celebration of vegetables without animal products."
+    },
+    "vegetariano": {
+      "title": "Harmonie",
+      "subtitle": "Ovo-Lacto Vegetarian",
+      "description": "The best of cheeses, eggs, and vegetables. Rich meat-free dishes."
+    },
+    "kids": {
+      "title": "Petit Gourmet",
+      "subtitle": "Kids Line",
+      "description": "Playful, colorful, and healthy dishes that children will love."
+    },
+    "budget": {
+      "title": "Trésor Économique",
+      "subtitle": "Budget Friendly",
+      "description": "Affordable luxury. Transform simple ingredients into unforgettable banquets."
+    },
+    "express": {
+      "title": "Temps Précieux",
+      "subtitle": "Express Recipes (20min)",
+      "description": "Instant sophistication. Impressive dishes ready in minutes."
     }
   }
 }

@@ -6,14 +6,16 @@ import { revalidatePath } from "next/cache";
 
 export async function toggleSaveRecipe(recipeData: any) {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Não autorizado" };
+  
+  // CORREÇÃO: Verificação explícita para o TypeScript entender
+  if (!session || !session.user || !session.user.id) {
+      return { error: "Não autorizado" };
+  }
 
   try {
-    // Verifica se já existe pelo título (ou ID se tivermos persistindo ids do catalogo)
-    // Aqui vamos usar uma lógica simples: se o usuário já tem uma receita com esse título exato
     const existing = await prisma.recipe.findFirst({
         where: {
-            userId: session.user.id,
+            userId: session.user.id, // Agora o TS sabe que isso existe
             title: recipeData.title
         }
     });
@@ -30,7 +32,7 @@ export async function toggleSaveRecipe(recipeData: any) {
                 description: recipeData.description,
                 category: recipeData.category,
                 imageUrl: recipeData.imageUrl,
-                fullContentJson: recipeData, // Salvamos o JSON completo da IA
+                fullContentJson: recipeData, 
             }
         });
         revalidatePath("/my-recipes");
@@ -44,7 +46,11 @@ export async function toggleSaveRecipe(recipeData: any) {
 
 export async function checkIsSaved(title: string) {
     const session = await auth();
-    if (!session?.user?.id) return false;
+    
+    // CORREÇÃO: Verificação explícita aqui também
+    if (!session || !session.user || !session.user.id) {
+        return false;
+    }
 
     const count = await prisma.recipe.count({
         where: { userId: session.user.id, title }

@@ -24,7 +24,9 @@
     "my_recipes": "Le Mie Ricette",
     "logout": "Esci",
     "empty_collection": "La tua collezione è vuota",
-    "empty_desc": "Visita l'Atelier per scoprire nuove ispirazioni."
+    "empty_desc": "Visita l'Atelier per scoprire nuove ispirazioni.",
+    "collection_title": "La Mia Collezione Privata",
+    "collection_subtitle": "I tuoi piatti selezionati, salvati e pronti per il servizio."
   },
   "Cuisine": {
     "back_categories": "Torna alle Categorie",
@@ -55,6 +57,56 @@
       "title": "L'Or Noir",
       "subtitle": "Alta Cucina Raffinata",
       "description": "Ingredienti rari, tecniche molecolari e impiattamento artistico."
+    },
+    "gluten_free": {
+      "title": "Liberté (Senza Glutine)",
+      "subtitle": "Celiaci & Gluten Free",
+      "description": "Sicurezza totale per celiaci. Panificazione e pasta festiva senza grano."
+    },
+    "lactose_free": {
+      "title": "Légèreté (Senza Lattosio)",
+      "subtitle": "Intolleranti al Lattosio",
+      "description": "Creme ricche, salse e dessert utilizzando latti vegetali premium."
+    },
+    "keto": {
+      "title": "Cétogène Chic",
+      "subtitle": "Low Carb & Keto",
+      "description": "Basso contenuto di carboidrati, grassi sani e proteine nobili."
+    },
+    "sugar_free": {
+      "title": "Douceur Absolue",
+      "subtitle": "Zero Zucchero",
+      "description": "Dolcezza dalla natura. Dolci incredibili senza zucchero raffinato."
+    },
+    "hipertensos": {
+      "title": "Coeur Sain",
+      "subtitle": "Ipertesi (Basso Sodio)",
+      "description": "Esplosione di sapore attraverso spezie ed erbe, senza dipendere dal sale."
+    },
+    "vegano": {
+      "title": "Jardin Pur",
+      "subtitle": "Vegano Stretto",
+      "description": "100% Plant-Based. La celebrazione dei vegetali senza derivati animali."
+    },
+    "vegetariano": {
+      "title": "Harmonie",
+      "subtitle": "Ovo-Latto Vegetariano",
+      "description": "Il meglio di formaggi, uova e verdure. Piatti ricchi senza carne."
+    },
+    "kids": {
+      "title": "Petit Gourmet",
+      "subtitle": "Linea Bambini",
+      "description": "Piatti giocosi, colorati e sani che i bambini ameranno."
+    },
+    "budget": {
+      "title": "Trésor Économique",
+      "subtitle": "Ricette Economiche",
+      "description": "Lusso accessibile. Trasforma ingredienti semplici in banchetti indimenticabili."
+    },
+    "express": {
+      "title": "Temps Précieux",
+      "subtitle": "Ricette Express (20min)",
+      "description": "Raffinatezza istantanea. Piatti impressionanti pronti in pochi minuti."
     }
   }
 }

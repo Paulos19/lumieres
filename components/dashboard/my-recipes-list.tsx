@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Recipe } from "@prisma/client"; // Tipagem automática do Prisma
+import { Recipe } from "@prisma/client";
 import { RecipeCard } from "@/components/cuisine/recipe-card";
 import { Clock, ChefHat } from "lucide-react";
+import { useTranslations } from "next-intl"; // Importar hook
 
 interface MyRecipesListProps {
   initialRecipes: Recipe[];
@@ -11,8 +12,8 @@ interface MyRecipesListProps {
 
 export function MyRecipesList({ initialRecipes }: MyRecipesListProps) {
   const [selectedRecipe, setSelectedRecipe] = useState<any | null>(null);
+  const t = useTranslations('Dashboard'); // Usar hook de tradução
 
-  // Função helper para parsear o JSON do banco (garantir tipagem)
   const getRecipeData = (recipe: Recipe) => {
     if (typeof recipe.fullContentJson === 'object') {
       return recipe.fullContentJson;
@@ -25,8 +26,8 @@ export function MyRecipesList({ initialRecipes }: MyRecipesListProps) {
       {initialRecipes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-white/10 rounded-lg bg-deep-800/30">
           <p className="text-gold-500 text-4xl mb-4">🍽️</p>
-          <h3 className="font-display text-xl text-stone-300 mb-2">Sua coleção está vazia</h3>
-          <p className="text-stone-500 font-serif italic">Visite o Atelier para descobrir novas inspirações.</p>
+          <h3 className="font-display text-xl text-stone-300 mb-2">{t('empty_collection')}</h3>
+          <p className="text-stone-500 font-serif italic">{t('empty_desc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up">

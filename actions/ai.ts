@@ -4,16 +4,22 @@ import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { auth } from "@/auth";
 import { put } from "@vercel/blob";
 
-// Inicialização do cliente Gemini
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Variáveis de ambiente para o n8n
 const N8N_WEBHOOK_URL = process.env.N8N_IMAGE_WEBHOOK_URL;
 const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
 
-// --- SCHEMAS ESTRUTURADOS ---
+// Mapa de códigos para nomes de idioma (para o Prompt da IA)
+const LANGUAGE_MAP: Record<string, string> = {
+  pt: "Português",
+  en: "English",
+  fr: "Français",
+  es: "Español",
+  it: "Italiano"
+};
 
-// 1. Schema para o Catálogo de Sugestões (Menu)
+// --- SCHEMAS ---
+
 const catalogSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -25,7 +31,10 @@ const catalogSchema: Schema = {
           id: { type: Type.STRING },
           title: { type: Type.STRING },
           description: { type: Type.STRING },
-          difficulty: { type: Type.STRING, enum: ['Fácil', 'Médio', 'Sofisticado'] },
+          // Mantemos os enums em PT/EN universais ou mapeamos no front. 
+          // Para simplificar a lógica do filtro no front, pediremos para a IA manter as chaves de complexidade
+          // compatíveis, mas aqui definimos o schema.
+          difficulty: { type: Type.STRING }, 
           complexityLevel: { type: Type.STRING, enum: ['Simples', 'Elaborada'] }
         },
         required: ["id", "title", "description", "difficulty", "complexityLevel"]
@@ -34,7 +43,6 @@ const catalogSchema: Schema = {
   }
 };
 
-// 2. Schema para a Receita Completa
 const recipeSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -61,29 +69,32 @@ const recipeSchema: Schema = {
     },
     functionalNotes: { type: Type.STRING }
   },
-  required: ["title", "description", "ingredients", "instructions", "visualDescription"]
+  required: ["title", "description", "ingredients", "instructions", "visualDescription", "dietTags"]
 };
 
-// --- SERVER ACTIONS ---
+// --- ACTIONS ---
 
-/**
- * Gera um menu com sugestões de pratos baseado no módulo e categoria.
- */
-export async function generateMenuAction(moduleModifier: string, category: string) {
+export async function generateMenuAction(moduleModifier: string, category: string, locale: string) {
   const session = await auth();
   if (!session) throw new Error("Unauthorized");
+
+  const targetLanguage = LANGUAGE_MAP[locale] || "Português";
 
   const prompt = `
     Atue como um Chef Executivo de classe mundial.
     Contexto do Módulo: ${moduleModifier}
     Categoria Solicitada: ${category}
     
-    Gere EXATAMENTE 20 sugestões de pratos exclusivos.
-    A lista deve ser dividida RIGOROSAMENTE em:
-    - 10 opções estilo 'Simples' (Comfort Food / Tradicional)
-    - 10 opções estilo 'Elaborada' (Alta Gastronomia / Michelin)
+    IDIOMA DE RESPOSTA OBRIGATÓRIO: ${targetLanguage}.
+    Traduza Título, Descrição e Dificuldade para ${targetLanguage}.
     
-    Retorne apenas o JSON seguindo o schema.
+    IMPORTANTE:
+    Mantenha o campo 'complexityLevel' EXATAMENTE como 'Simples' ou 'Elaborada' (não traduza este valor específico pois é usado para filtro no sistema).
+    
+    Gere 20 sugestões de pratos.
+    Divida RIGOROSAMENTE: 10 'Simples' e 10 'Elaborada'.
+    
+    Retorne JSON.
   `;
 
   try {
@@ -102,22 +113,26 @@ export async function generateMenuAction(moduleModifier: string, category: strin
   }
 }
 
-/**
- * Gera os detalhes completos de uma receita específica.
- */
-export async function generateRecipeAction(title: string, moduleModifier: string, category: string) {
+export async function generateRecipeAction(title: string, moduleModifier: string, category: string, locale: string) {
   const session = await auth();
   if (!session) throw new Error("Unauthorized");
 
+  const targetLanguage = LANGUAGE_MAP[locale] || "Português";
+
   const prompt = `
-    Crie a receita completa e detalhada para o prato: "${title}".
+    Crie a receita completa para: "${title}".
     Contexto: ${moduleModifier}
     Categoria: ${category}
     
+    IDIOMA DE RESPOSTA: ${targetLanguage}.
+    Todos os campos de texto (ingredientes, instruções, dicas, notas) DEVEM estar em ${targetLanguage}.
+    
+    ATENÇÃO AS TAGS (dietTags):
+    Gere as tags (ex: Sem Glúten, Low Carb, Gourmet) traduzidas para ${targetLanguage}.
+    
     Requisitos:
-    1. A 'visualDescription' deve ser um prompt de fotografia (em inglês ou português) extremamente detalhado para gerar uma imagem depois.
-    2. As instruções devem ser claras e profissionais.
-    3. Inclua macros aproximados.
+    1. 'visualDescription': Prompt de fotografia detalhado (pode manter em Inglês se preferir para melhor qualidade de imagem, ou no idioma nativo).
+    2. 'complexityRating': Manter 'Simples' ou 'Elaborada'.
     
     Retorne JSON estrito.
   `;
@@ -138,16 +153,11 @@ export async function generateRecipeAction(title: string, moduleModifier: string
   }
 }
 
-/**
- * Orquestra a geração de mídia (Imagem) via n8n e faz upload para o Vercel Blob.
- */
-export async function generateMediaAction(recipeTitle: string, visualDescription: string) {
+export async function generateMediaAction(recipeTitle: string, visualDescription: string, locale: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  // Validação de configuração
   if (!N8N_WEBHOOK_URL) {
-    console.warn("N8N Webhook URL not configured. Using placeholder.");
     return {
       imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent(recipeTitle)}`,
       videoUrl: null
@@ -155,9 +165,9 @@ export async function generateMediaAction(recipeTitle: string, visualDescription
   }
 
   try {
-    console.log(`[AI] Solicitando imagem para: ${recipeTitle}`);
-
-    // 1. Chamada ao n8n (que vai refinar o prompt e gerar a imagem)
+    console.log(`[AI] Solicitando mídia ao n8n em ${locale}...`);
+    
+    // Enviamos o locale para o n8n caso ele queira gerar textos ou legendas no idioma correto
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -166,54 +176,40 @@ export async function generateMediaAction(recipeTitle: string, visualDescription
       },
       body: JSON.stringify({
         recipeTitle,
-        visualDescription
+        visualDescription,
+        locale: locale, // Passando o idioma
+        userId: session.user.id
       })
     });
 
     if (!response.ok) {
-      throw new Error(`N8N Error: ${response.status} - ${response.statusText}`);
+      throw new Error(`N8N Error: ${response.status}`);
     }
 
     const data = await response.json();
     
-    // O n8n deve retornar { base64: "data:image/png;base64,..." }
-    if (!data.base64) {
-      throw new Error("O n8n não retornou a propriedade 'base64' esperada.");
-    }
+    if (!data.base64) throw new Error("No base64 returned");
 
-    console.log("[AI] Imagem recebida do n8n. Iniciando upload para Vercel Blob...");
-
-    // 2. Processar o Base64
-    // Remove o prefixo "data:image/png;base64," se existir para criar o buffer
-    const base64Data = data.base64.includes('base64,') 
-      ? data.base64.split('base64,')[1] 
-      : data.base64;
-      
+    // Upload Blob
+    const base64Data = data.base64.includes('base64,') ? data.base64.split('base64,')[1] : data.base64;
     const buffer = Buffer.from(base64Data, 'base64');
-    
-    // 3. Gerar nome de arquivo único e organizado
-    // Ex: recipes/user_123/1715620000-titulo-da-receita.png
     const cleanTitle = recipeTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 50);
     const filename = `recipes/${session.user.id}/${Date.now()}-${cleanTitle}.png`;
 
-    // 4. Upload para Vercel Blob
     const blob = await put(filename, buffer, {
       access: 'public',
-      contentType: 'image/png', // Ajuste se o n8n retornar outro formato (ex: jpeg)
+      contentType: 'image/png',
     });
-
-    console.log("[AI] Upload concluído:", blob.url);
 
     return {
       imageUrl: blob.url,
-      videoUrl: null // Preparado para expansão futura (vídeo)
+      videoUrl: null
     };
 
   } catch (error) {
     console.error("Media Pipeline Failed:", error);
-    // Retorna fallback em caso de erro para não quebrar a UI do usuário
     return {
-      imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent("Erro na Geração")}`,
+      imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent("Erro")}`,
       videoUrl: null
     };
   }

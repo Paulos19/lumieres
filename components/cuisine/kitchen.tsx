@@ -6,6 +6,7 @@ import { generateMenuAction, generateRecipeAction, generateMediaAction } from '@
 import { RecipeCard } from './recipe-card';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useLocale, useTranslations } from 'next-intl'; // Importações i18n
 
 const CATEGORIES = [
   'Entrada', 'Petisco', 'Prato Principal', 'Sobremesa', 'Bebida Não Alcoólica'
@@ -16,6 +17,9 @@ interface KitchenProps {
 }
 
 export const Kitchen = ({ module }: KitchenProps) => {
+  const locale = useLocale(); // Obtém o idioma atual (pt, en, fr...)
+  const t = useTranslations('Cuisine'); // Hooks para textos da UI
+  
   const [view, setView] = useState<'CATEGORIES' | 'MENU_LIST' | 'RECIPE_DETAIL'>('CATEGORIES');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [menuList, setMenuList] = useState<any[]>([]);
@@ -27,10 +31,11 @@ export const Kitchen = ({ module }: KitchenProps) => {
   const handleCategorySelect = async (category: string) => {
     setSelectedCategory(category);
     setLoading(true);
-    setLoadingText(`O Chef está elaborando o menu de ${category}...`);
+    setLoadingText(t('preparing')); // Usa texto traduzido para "Carregando..."
     
     try {
-      const data = await generateMenuAction(module.promptModifier, category);
+      // Passa o locale para a action
+      const data = await generateMenuAction(module.promptModifier, category, locale);
       if (data?.recipes) {
         setMenuList(data.recipes);
         setView('MENU_LIST');
@@ -46,23 +51,21 @@ export const Kitchen = ({ module }: KitchenProps) => {
 
   const handleRecipeSelect = async (summary: any) => {
     setLoading(true);
-    setLoadingText(`Preparando mise en place para "${summary.title}"...`);
+    setLoadingText(t('preparing'));
     
     try {
-      // 1. Gera texto da receita (Server Action)
-      const recipe = await generateRecipeAction(summary.title, module.promptModifier, selectedCategory);
+      // 1. Gera texto da receita (Passando locale)
+      const recipe = await generateRecipeAction(summary.title, module.promptModifier, selectedCategory, locale);
       
-      // 2. Gera Mídia via n8n (Server Action)
-      setLoadingText("Finalizando produção visual (IA)...");
-      
-      // ATUALIZADO: Usa generateMediaAction em vez de generateImageAction
-      const media = await generateMediaAction(summary.title, recipe.visualDescription);
+      // 2. Gera Mídia (Passando locale para o n8n)
+      setLoadingText(t('generating_visuals'));
+      const media = await generateMediaAction(summary.title, recipe.visualDescription, locale);
       
       setCurrentRecipe({ 
         ...recipe, 
         id: summary.id, 
         imageUrl: media.imageUrl, 
-        videoUrl: media.videoUrl, // Novo campo suportado
+        videoUrl: media.videoUrl,
         category: selectedCategory 
       });
       
@@ -88,20 +91,19 @@ export const Kitchen = ({ module }: KitchenProps) => {
 
   return (
     <div className="w-full min-h-[600px]">
-        {/* Breadcrumb simples */}
         {view !== 'CATEGORIES' && (
             <button 
                 onClick={() => setView('CATEGORIES')} 
                 className="mb-8 text-gold-500 hover:text-white uppercase text-xs tracking-widest transition-colors flex items-center gap-2"
             >
-                ← Voltar para Categorias
+                ← {t('back_categories')}
             </button>
         )}
 
         {view === 'CATEGORIES' && (
             <div className="animate-fade-in">
-                <h2 className="font-display text-4xl text-white text-center mb-2">O que deseja servir?</h2>
-                <p className="text-stone-400 text-center mb-12 font-serif italic">Selecione uma categoria para ver as sugestões do Chef</p>
+                <h2 className="font-display text-4xl text-white text-center mb-2">{t('what_to_serve')}</h2>
+                <p className="text-stone-400 text-center mb-12 font-serif italic">{t('select_category')}</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {CATEGORIES.map((cat) => (
@@ -115,6 +117,7 @@ export const Kitchen = ({ module }: KitchenProps) => {
                                 <span className="font-serif text-4xl text-stone-600 group-hover:text-gold-300 mb-4 transition-colors">
                                     {cat === 'Entrada' ? '🥗' : cat === 'Petisco' ? '🍢' : cat === 'Prato Principal' ? '🥘' : cat === 'Sobremesa' ? '🍰' : '🍹'}
                                 </span>
+                                {/* Aqui poderíamos traduzir as categorias estáticas também se desejado, usando t(cat) */}
                                 <span className="font-sans uppercase tracking-widest text-sm font-bold text-stone-300 group-hover:text-white text-center">
                                     {cat}
                                 </span>

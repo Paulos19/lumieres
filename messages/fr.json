@@ -24,7 +24,9 @@
     "my_recipes": "Mes Recettes",
     "logout": "Se déconnecter",
     "empty_collection": "Votre collection est vide",
-    "empty_desc": "Visitez l'Atelier pour découvrir de nouvelles inspirations."
+    "empty_desc": "Visitez l'Atelier pour découvrir de nouvelles inspirations.",
+    "collection_title": "Ma Collection Privée",
+    "collection_subtitle": "Vos plats sélectionnés, enregistrés et prêts pour le service."
   },
   "Cuisine": {
     "back_categories": "Retour aux Catégories",
@@ -55,6 +57,56 @@
       "title": "L'Or Noir",
       "subtitle": "Haute Gastronomie Raffinée",
       "description": "Ingrédients rares, techniques moléculaires et dressage artistique."
+    },
+    "gluten_free": {
+      "title": "Liberté (Sans Gluten)",
+      "subtitle": "Cœliaques & Sans Gluten",
+      "description": "Sécurité totale pour les cœliaques. Pâtisserie et pâtes festives sans blé."
+    },
+    "lactose_free": {
+      "title": "Légèreté (Sans Lactose)",
+      "subtitle": "Intolérants au Lactose",
+      "description": "Crèmes riches, sauces et desserts utilisant des laits végétaux premium."
+    },
+    "keto": {
+      "title": "Cétogène Chic",
+      "subtitle": "Low Carb & Keto",
+      "description": "Faible en glucides, bonnes graisses et protéines nobles. Festin sans culpabilité."
+    },
+    "sugar_free": {
+      "title": "Douceur Absolue",
+      "subtitle": "Zéro Sucre",
+      "description": "La douceur de la nature. Desserts incroyables sans sucre raffiné."
+    },
+    "hipertensos": {
+      "title": "Coeur Sain",
+      "subtitle": "Hypertendus (Faible en Sodium)",
+      "description": "Explosion de saveurs grâce aux épices et herbes, sans dépendre du sel."
+    },
+    "vegano": {
+      "title": "Jardin Pur",
+      "subtitle": "Végan Strict",
+      "description": "100% Végétal. La célébration des légumes sans produits d'origine animale."
+    },
+    "vegetariano": {
+      "title": "Harmonie",
+      "subtitle": "Ovo-Lacto Végétarien",
+      "description": "Le meilleur des fromages, œufs et légumes. Plats riches sans viande."
+    },
+    "kids": {
+      "title": "Petit Gourmet",
+      "subtitle": "Gamme Enfants",
+      "description": "Plats ludiques, colorés et sains que les enfants vont adorer."
+    },
+    "budget": {
+      "title": "Trésor Économique",
+      "subtitle": "Recettes Budget",
+      "description": "Luxe abordable. Transformez des ingrédients simples en banquets inoubliables."
+    },
+    "express": {
+      "title": "Temps Précieux",
+      "subtitle": "Recettes Express (20min)",
+      "description": "Sophistication instantanée. Plats impressionnants prêts en quelques minutes."
     }
   }
 }
