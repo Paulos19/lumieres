@@ -1,5 +1,5 @@
 import { defineRouting } from 'next-intl/routing';
-import { createSharedPathnamesNavigation } from 'next-intl/navigation';
+import { createNavigation } from 'next-intl/navigation'; // <-- Atualizado aqui
 
 export const routing = defineRouting({
   // Lista de locais suportados
@@ -10,5 +10,5 @@ export const routing = defineRouting({
 });
 
 // Wrappers leves para navegação que consideram o locale
-export const { Link, redirect, usePathname, useRouter } =
-  createSharedPathnamesNavigation(routing);
+export const { Link, redirect, usePathname, useRouter, getPathname } =
+  createNavigation(routing);

@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
-import { redirect } from "@/i18n/routing"; // Importação do routing i18n
+import { redirect } from "@/i18n/routing"; // Usa o redirect com suporte a locale
 import { UserNav } from "@/components/dashboard/user-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { Link } from "@/i18n/routing"; // Link que preserva o locale
+import { Link } from "@/i18n/routing"; // Link com suporte a locale
 import { getTranslations } from 'next-intl/server';
 
 export default async function DashboardLayout({
@@ -12,12 +12,12 @@ export default async function DashboardLayout({
 }) {
   const session = await auth();
 
-  // Proteção de Rota
+  // Proteção de Rota: Se não logado, redireciona para login (mantendo o idioma padrão)
   if (!session) {
-    redirect({ href: "/login", locale: "pt" }); // Redireciona preservando default ou detectado
+    redirect({ href: "/login", locale: "pt" });
   }
 
-  // Carrega as traduções do namespace 'Dashboard'
+  // Carrega as traduções do namespace 'Dashboard' no servidor
   const t = await getTranslations('Dashboard');
 
   return (
