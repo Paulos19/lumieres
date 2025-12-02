@@ -11,7 +11,7 @@ export default async function RegisterPage() {
   }
 
   return (
-    <div className="h-full flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=2960&auto=format&fit=crop')] bg-cover bg-center">
+    <div className="h-full flex items-center justify-center bg-cover bg-center">
       <div className="absolute inset-0 bg-deep-900/80 backdrop-blur-sm" />
       <div className="relative z-10">
         <RegisterForm />
