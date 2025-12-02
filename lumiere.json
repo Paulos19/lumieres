@@ -1,0 +1,158 @@
+{
+  "name": "Lumiere - Gerador de Vídeo (Veo)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gerar-video-passo",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "webhook-video",
+      "name": "1. Webhook (Receber Passo)",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SEU_ID_DE_CREDENTIAL_AQUI",
+          "name": "Lumiere Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [220, 280],
+      "id": "gemini-chat-video",
+      "name": "Modelo Gemini (Prompt)"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é um Diretor de Fotografia especializado em 'Food Porn' e comerciais de TV. Sua tarefa é transformar uma instrução de receita em um prompt visual para o modelo de vídeo Veo/Sora.\n\nENTRADA:\nReceita: {{ $json.body.recipeTitle }}\nPasso: {{ $json.body.stepText }}\n\nOBJETIVO:\nCrie um prompt em INGLÊS descrevendo um clipe de 4 segundos. Use termos como: 'slow motion', '4k', 'cinematic lighting', 'extreme close-up', 'steam rising', 'sizzling'. Foque na ação principal do passo (ex: cortar, refogar, empratar).\n\nSAÍDA:\nApenas o prompt em inglês.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [220, 0],
+      "id": "ai-agent-video-director",
+      "name": "2. Agente: Diretor de Fotografia"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.google.com/veo-endpoint-simulado", 
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.output }}"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "16:9"
+            },
+            {
+              "name": "duration_seconds",
+              "value": "4"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [580, 0],
+      "id": "veo-generator",
+      "name": "3. Gerar Vídeo (Veo/Vertex)",
+      "notes": "Configure aqui a URL real da API do Veo (Vertex AI) ou Luma/Runway se o Veo não estiver público na sua região."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Converter o binário ou URL do vídeo para Base64 para devolver ao Next.js\n// Assumindo que a API retorna um buffer ou link que baixamos\nconst videoData = items[0].binary.data;\n\nreturn [\n  {\n    json: {\n      base64: `data:video/mp4;base64,${videoData.data}`\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 0],
+      "id": "video-converter",
+      "name": "4. Converter Vídeo Base64"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 0],
+      "id": "webhook-video-response",
+      "name": "5. Responder ao Next.js"
+    }
+  ],
+  "connections": {
+    "1. Webhook (Receber Passo)": {
+      "main": [
+        [
+          {
+            "node": "2. Agente: Diretor de Fotografia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini (Prompt)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "2. Agente: Diretor de Fotografia",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Agente: Diretor de Fotografia": {
+      "main": [
+        [
+          {
+            "node": "3. Gerar Vídeo (Veo/Vertex)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Gerar Vídeo (Veo/Vertex)": {
+      "main": [
+        [
+          {
+            "node": "4. Converter Vídeo Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Converter Vídeo Base64": {
+      "main": [
+        [
+          {
+            "node": "5. Responder ao Next.js",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

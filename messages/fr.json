@@ -40,7 +40,9 @@
     "chefs_note": "La Touche du Chef",
     "time": "Temps",
     "portions": "Portions",
-    "difficulty": "Difficulté"
+    "difficulty": "Difficulté",
+    "simple": "Simple",
+    "elaborate": "Élaborée"
   },
   "Categories": {
     "starter": "Entrée",

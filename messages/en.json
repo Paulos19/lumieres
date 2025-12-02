@@ -40,7 +40,9 @@
     "chefs_note": "Chef's Touch",
     "time": "Time",
     "portions": "Servings",
-    "difficulty": "Difficulty"
+    "difficulty": "Difficulty",
+    "simple": "Simple",
+    "elaborate": "Elaborate"
   },
   "Categories": {
     "starter": "Starter",

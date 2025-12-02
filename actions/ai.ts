@@ -6,6 +6,7 @@ import { put } from "@vercel/blob";
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const N8N_VIDEO_WEBHOOK_URL = process.env.N8N_VIDEO_WEBHOOK_URL;
 const N8N_WEBHOOK_URL = process.env.N8N_IMAGE_WEBHOOK_URL;
 const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
 
@@ -212,5 +213,59 @@ export async function generateMediaAction(recipeTitle: string, visualDescription
       imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent("Erro")}`,
       videoUrl: null
     };
+  }
+}
+
+export async function generateStepVideoAction(stepText: string, recipeTitle: string, locale: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  if (!N8N_VIDEO_WEBHOOK_URL) {
+    console.warn("N8N Video Webhook URL not configured.");
+    return { videoUrl: null };
+  }
+
+  try {
+    console.log(`[AI Video] Gerando clipe para o passo: "${stepText.slice(0, 20)}..."`);
+
+    const response = await fetch(N8N_VIDEO_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        stepText,
+        recipeTitle,
+        locale,
+        userId: session.user.id
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`N8N Video Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.base64) throw new Error("No video base64 returned");
+
+    // Upload Blob (MP4)
+    const base64Data = data.base64.includes('base64,') ? data.base64.split('base64,')[1] : data.base64;
+    const buffer = Buffer.from(base64Data, 'base64');
+    const filename = `recipes/${session.user.id}/videos/${Date.now()}-step.mp4`;
+
+    const blob = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'video/mp4',
+    });
+
+    console.log("[AI Video] Upload concluído:", blob.url);
+
+    return { videoUrl: blob.url };
+
+  } catch (error) {
+    console.error("Video Pipeline Failed:", error);
+    return { videoUrl: null };
   }
 }

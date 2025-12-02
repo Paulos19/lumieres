@@ -40,7 +40,9 @@
     "chefs_note": "El Toque del Chef",
     "time": "Tiempo",
     "portions": "Porciones",
-    "difficulty": "Dificultad"
+    "difficulty": "Dificultad",
+    "simple": "Simple",
+    "elaborate": "Elaborada"
   },
   "Categories": {
     "starter": "Entrante",

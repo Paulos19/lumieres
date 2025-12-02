@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLocale, useTranslations } from 'next-intl';
 
-// Usamos chaves internas para mapear com o arquivo JSON
 const CATEGORY_KEYS = [
   'starter', 'appetizer', 'main', 'dessert', 'drink'
 ] as const;
@@ -20,10 +19,10 @@ interface KitchenProps {
 export const Kitchen = ({ module }: KitchenProps) => {
   const locale = useLocale();
   const t = useTranslations('Cuisine');
-  const tCat = useTranslations('Categories'); // Novo hook para categorias
+  const tCat = useTranslations('Categories');
   
   const [view, setView] = useState<'CATEGORIES' | 'MENU_LIST' | 'RECIPE_DETAIL'>('CATEGORIES');
-  const [selectedCategory, setSelectedCategory] = useState(''); // Guarda o nome traduzido para passar pra IA
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [menuList, setMenuList] = useState<any[]>([]);
   const [currentRecipe, setCurrentRecipe] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -31,15 +30,12 @@ export const Kitchen = ({ module }: KitchenProps) => {
   const [activeTab, setActiveTab] = useState<'Simples' | 'Elaborada'>('Simples');
 
   const handleCategorySelect = async (categoryKey: string) => {
-    // Pegamos a tradução real (ex: "Entrée" ou "Starter")
     const translatedCategory = tCat(categoryKey);
-    
     setSelectedCategory(translatedCategory);
     setLoading(true);
     setLoadingText(t('preparing'));
     
     try {
-      // Passamos a categoria traduzida para a IA
       const data = await generateMenuAction(module.promptModifier, translatedCategory, locale);
       if (data?.recipes) {
         setMenuList(data.recipes);
@@ -75,13 +71,11 @@ export const Kitchen = ({ module }: KitchenProps) => {
       setView('RECIPE_DETAIL');
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao gerar receita completa.");
+      toast.error("Erro ao detalhar a receita.");
     } finally {
       setLoading(false);
     }
   };
-
-  // --- RENDER ---
 
   if (loading) {
     return (
@@ -118,14 +112,13 @@ export const Kitchen = ({ module }: KitchenProps) => {
                             <div className="absolute inset-0 bg-deep-800 group-hover:bg-deep-900 transition-colors"></div>
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10">
                                 <span className="font-serif text-4xl text-stone-600 group-hover:text-gold-300 mb-4 transition-colors">
-                                    {/* Ícones baseados na chave */}
                                     {key === 'starter' ? '🥗' : 
                                      key === 'appetizer' ? '🍢' : 
                                      key === 'main' ? '🥘' : 
                                      key === 'dessert' ? '🍰' : '🍹'}
                                 </span>
                                 <span className="font-sans uppercase tracking-widest text-sm font-bold text-stone-300 group-hover:text-white text-center">
-                                    {tCat(key)} {/* Texto Traduzido */}
+                                    {tCat(key)}
                                 </span>
                             </div>
                         </button>
@@ -147,7 +140,8 @@ export const Kitchen = ({ module }: KitchenProps) => {
                                     activeTab === tab ? "bg-gold-500 text-deep-900" : "text-stone-500 hover:text-gold-400"
                                 )}
                             >
-                                {tab}
+                                {/* Mapeia o valor interno (ex: 'Simples') para a chave de tradução (ex: 'simple') */}
+                                {tab === 'Simples' ? t('simple') : t('elaborate')}
                             </button>
                         ))}
                     </div>

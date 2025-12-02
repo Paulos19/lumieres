@@ -40,7 +40,9 @@
     "chefs_note": "Il Tocco dello Chef",
     "time": "Tempo",
     "portions": "Porzioni",
-    "difficulty": "Difficoltà"
+    "difficulty": "Difficoltà",
+    "simple": "Semplice",
+    "elaborate": "Elaborata"
   },
   "Categories": {
     "starter": "Antipasto",
