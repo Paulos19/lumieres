@@ -1,53 +1,43 @@
 import { NextResponse } from "next/server";
-
-// Assegure-se de que estas variáveis estão no .env do seu projeto na Vercel
-const N8N_WEBHOOK_URL = process.env.N8N_PERSONAL_CHEF_WEBHOOK_URL;
-const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
+import { generatePersonalizedRecipeAction } from "@/actions/ai";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { weight, height, goal, ingredients, restrictions, locale, userId, userName } = body;
-
-    if (!N8N_WEBHOOK_URL) {
-      console.error("N8N Webhook URL não configurada");
-      return NextResponse.json({ error: "Serviço de IA indisponível temporariamente." }, { status: 503 });
-    }
-
-    console.log(`[Mobile AI] Iniciando geração para ${userName}...`);
-
-    // Chama o N8N
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
-      },
-      body: JSON.stringify({
-        weight,
-        height,
-        goal,
-        ingredients,
-        restrictions,
-        locale: locale || "pt",
-        userId,
-        userName
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Mobile AI] Erro N8N (${response.status}): ${errorText}`);
-      throw new Error(`Erro no serviço de IA: ${response.status}`);
-    }
-
-    const data = await response.json();
     
-    // O N8N deve retornar { recipe: {...}, imageUrl: "..." } ou o JSON da receita com a imagem dentro
-    return NextResponse.json(data);
+    // Desestruturamos também o userId e userName, que agora o Mobile envia explicitamente
+    const { selectedTitle, contextData, locale, userId, userName } = body;
 
-  } catch (error: any) {
-    console.error("[Mobile AI] Erro:", error);
-    return NextResponse.json({ error: "Falha ao criar sua receita. Tente novamente." }, { status: 500 });
+    // Validação básica
+    if (!selectedTitle) {
+      return NextResponse.json({ error: "Título do prato não informado." }, { status: 400 });
+    }
+
+    // Chama a Server Action passando os dados do utilizador manualmente
+    // Isso permite que a Action ignore o auth() (cookies) e use estes dados
+    const fullRecipe = await generatePersonalizedRecipeAction({
+      selectedTitle,
+      ...contextData, // Preferências originais (budget, guests, etc.)
+      userId, 
+      userName
+    }, locale || 'pt');
+
+    return NextResponse.json(fullRecipe);
+
+  } catch (error) {
+    console.error("[API Mobile Generate] Error:", error);
+
+    // Tratamento específico para erro de autorização
+    if (error instanceof Error && error.message === "Unauthorized") {
+        return NextResponse.json(
+          { error: "Sessão inválida ou expirada. Faça login novamente." }, 
+          { status: 401 }
+        );
+    }
+
+    return NextResponse.json(
+      { error: "Erro interno ao gerar receita completa." }, 
+      { status: 500 }
+    );
   }
 }

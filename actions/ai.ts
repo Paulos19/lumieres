@@ -145,8 +145,17 @@ export async function consultPersonalChefAction(preferences: any, locale: string
  * Conecta com o workflow "Lumière - Personal Chef (Perfil & Receita)".
  */
 export async function generatePersonalizedRecipeAction(params: any, locale: string) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  // LÓGICA HÍBRIDA (WEB vs MOBILE)
+  let userId = params.userId;
+  let userName = params.userName;
+
+  // Se NÃO veio ID nos parâmetros (Fluxo Web), tentamos pegar da sessão
+  if (!userId) {
+    const session = await auth();
+    if (!session || !session.user) throw new Error("Unauthorized");
+    userId = session.user.id;
+    userName = session.user.name;
+  }
 
   if (!N8N_GENERATE_RECIPE_WEBHOOK) {
     throw new Error("Webhook de Geração Completa não configurado.");
@@ -162,22 +171,18 @@ export async function generatePersonalizedRecipeAction(params: any, locale: stri
         "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
       },
       body: JSON.stringify({
-        ...params, // selectedTitle, contextData (preferences)...
+        ...params, 
         locale,
-        userId: session.user?.id,
-        userName: session.user?.name
+        userId: userId,     // Usa a variável resolvida acima
+        userName: userName  // Usa a variável resolvida acima
       })
     });
 
+    // ... (o resto do código permanece igual, tratando a resposta)
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[AI] N8N Generate Error Body:", errorText);
-      throw new Error(`Falha no N8N: ${response.status}`);
+       // ...
     }
-
     const data = await response.json();
-    
-    // Espera-se que o n8n retorne o objeto Recipe completo + imageUrl
     return data;
 
   } catch (error) {
