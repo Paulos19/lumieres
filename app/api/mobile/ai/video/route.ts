@@ -33,6 +33,8 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
+
+    console.log("[Mobile Video] Resposta Bruta do N8N:", JSON.stringify(data, null, 2));
     
     // O n8n retorna { base64: "..." } ou { videoUrl: "..." } dependendo do seu fluxo
     // Vamos assumir que seu fluxo mobile já retorna a URL ou tratamos igual ao actions/ai.ts
