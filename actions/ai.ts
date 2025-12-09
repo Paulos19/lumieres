@@ -162,33 +162,43 @@ export async function generatePersonalizedRecipeAction(params: any, locale: stri
   }
 
   try {
-    console.log(`[AI] Gerando receita completa para: ${params.selectedTitle || 'Personalizado'}`);
+      console.log(`[AI] Enviando para N8N: ${N8N_GENERATE_RECIPE_WEBHOOK}`);
+      
+      const response = await fetch(N8N_GENERATE_RECIPE_WEBHOOK, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
+        },
+        body: JSON.stringify({
+          ...params, 
+          locale,
+          userId: userId,
+          userName: userName
+        })
+      });
 
-    const response = await fetch(N8N_GENERATE_RECIPE_WEBHOOK, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
-      },
-      body: JSON.stringify({
-        ...params, 
-        locale,
-        userId: userId,     // Usa a variável resolvida acima
-        userName: userName  // Usa a variável resolvida acima
-      })
-    });
+      // Se o N8N der erro (4xx ou 5xx)
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[AI] N8N Erro ${response.status}:`, errorText);
+        throw new Error(`Erro no N8N (${response.status}): Verifique o terminal do servidor.`);
+      }
 
-    // ... (o resto do código permanece igual, tratando a resposta)
-    if (!response.ok) {
-       // ...
+      // Tenta fazer o parse do JSON com segurança
+      const responseText = await response.text();
+      try {
+        const data = JSON.parse(responseText);
+        return data;
+      } catch (e) {
+        console.error("[AI] N8N retornou algo que não é JSON:", responseText);
+        throw new Error("N8N retornou uma resposta inválida (não-JSON).");
+      }
+
+    } catch (error) {
+      console.error("[AI] Erro na Geração Completa:", error);
+      throw error; // Repassa o erro para a rota API tratar
     }
-    const data = await response.json();
-    return data;
-
-  } catch (error) {
-    console.error("[AI] Erro na Geração Completa:", error);
-    throw new Error("Falha ao criar sua receita personalizada.");
-  }
 }
 
 

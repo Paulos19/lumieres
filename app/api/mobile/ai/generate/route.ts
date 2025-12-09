@@ -5,19 +5,21 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // Desestruturamos também o userId e userName, que agora o Mobile envia explicitamente
+    // 1. Recebemos os dados do Mobile
     const { selectedTitle, contextData, locale, userId, userName } = body;
 
-    // Validação básica
     if (!selectedTitle) {
-      return NextResponse.json({ error: "Título do prato não informado." }, { status: 400 });
+      return NextResponse.json({ error: "Título não informado" }, { status: 400 });
     }
 
-    // Chama a Server Action passando os dados do utilizador manualmente
-    // Isso permite que a Action ignore o auth() (cookies) e use estes dados
+    console.log(`[API Mobile] Iniciando geração para: ${selectedTitle} (User: ${userId})`);
+
+    // 2. Chamamos a Action
+    // CORREÇÃO: Passamos 'contextData' como propriedade aninhada, não espalhada (...contextData)
+    // Isso garante que o n8n receba {{ $json.body.contextData }} corretamente.
     const fullRecipe = await generatePersonalizedRecipeAction({
       selectedTitle,
-      ...contextData, // Preferências originais (budget, guests, etc.)
+      contextData, // <--- Mantemos aninhado
       userId, 
       userName
     }, locale || 'pt');
@@ -25,18 +27,15 @@ export async function POST(req: Request) {
     return NextResponse.json(fullRecipe);
 
   } catch (error) {
-    console.error("[API Mobile Generate] Error:", error);
+    console.error("[API Mobile Generate] Fatal Error:", error);
 
-    // Tratamento específico para erro de autorização
     if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json(
-          { error: "Sessão inválida ou expirada. Faça login novamente." }, 
-          { status: 401 }
-        );
+        return NextResponse.json({ error: "Sessão inválida." }, { status: 401 });
     }
 
+    // Retorna o erro real para facilitar o debug no mobile
     return NextResponse.json(
-      { error: "Erro interno ao gerar receita completa." }, 
+      { error: error instanceof Error ? error.message : "Erro interno no servidor." }, 
       { status: 500 }
     );
   }
