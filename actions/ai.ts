@@ -4,14 +4,23 @@ import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { auth } from "@/auth";
 import { put } from "@vercel/blob";
 
+// --- CONFIGURAÇÃO ---
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const N8N_PERSONAL_CHEF_WEBHOOK = process.env.N8N_PERSONAL_CHEF_WEBHOOK_URL;
-const N8N_VIDEO_WEBHOOK_URL = process.env.N8N_VIDEO_WEBHOOK_URL;
-const N8N_WEBHOOK_URL = process.env.N8N_IMAGE_WEBHOOK_URL;
+// Webhooks N8N
 const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
 
-// Mapa de códigos para nomes de idioma (para o Prompt da IA)
+// 1. Webhooks de Media (Legado/Avulso)
+const N8N_VIDEO_WEBHOOK_URL = process.env.N8N_VIDEO_WEBHOOK_URL;
+const N8N_IMAGE_WEBHOOK_URL = process.env.N8N_IMAGE_WEBHOOK_URL;
+
+// 2. Webhooks Du Chef (Novos)
+// Webhook para LISTAR sugestões (Rápido/Leve)
+const N8N_CONSULT_WEBHOOK = process.env.N8N_CONSULT_WEBHOOK_URL; 
+// Webhook para GERAR receita completa + foto (Lento/Pesado - Workflow "Lumière - Personal Chef")
+const N8N_GENERATE_RECIPE_WEBHOOK = process.env.N8N_GENERATE_RECIPE_WEBHOOK_URL || process.env.N8N_PERSONAL_CHEF_WEBHOOK_URL;
+
+// Mapa de Idiomas
 const LANGUAGE_MAP: Record<string, string> = {
   pt: "Português",
   en: "English",
@@ -20,7 +29,7 @@ const LANGUAGE_MAP: Record<string, string> = {
   it: "Italiano"
 };
 
-// --- SCHEMAS ---
+// --- SCHEMAS (GEMINI) ---
 
 const catalogSchema: Schema = {
   type: Type.OBJECT,
@@ -33,10 +42,7 @@ const catalogSchema: Schema = {
           id: { type: Type.STRING },
           title: { type: Type.STRING },
           description: { type: Type.STRING },
-          // Mantemos os enums em PT/EN universais ou mapeamos no front. 
-          // Para simplificar a lógica do filtro no front, pediremos para a IA manter as chaves de complexidade
-          // compatíveis, mas aqui definimos o schema.
-          difficulty: { type: Type.STRING }, 
+          difficulty: { type: Type.STRING },
           complexityLevel: { type: Type.STRING, enum: ['Simples', 'Elaborada'] }
         },
         required: ["id", "title", "description", "difficulty", "complexityLevel"]
@@ -74,7 +80,114 @@ const recipeSchema: Schema = {
   required: ["title", "description", "ingredients", "instructions", "visualDescription", "dietTags"]
 };
 
-// --- ACTIONS ---
+// --- ACTIONS DO DU CHEF (NOVAS) ---
+
+/**
+ * Passo 1: Consulta o Personal Chef para obter ideias de pratos.
+ * Retorna uma lista leve de sugestões (JSON).
+ */
+export async function consultPersonalChefAction(preferences: any, locale: string) {
+  const session = await auth();
+
+  // Fallback se webhook não estiver configurado (para testes)
+  if (!N8N_CONSULT_WEBHOOK) {
+    console.warn("⚠️ [AI] Webhook de Consulta N8N não configurado. Retornando Mock.");
+    await new Promise(r => setTimeout(r, 1500));
+    return [
+      { 
+        title: "Salmão Grelhado com Aspargos (Mock)", 
+        description: "Opção leve rica em ômega-3, ideal para o jantar.", 
+        difficulty: "Médio" 
+      },
+      { 
+        title: "Risoto de Cogumelos Selvagens (Mock)", 
+        description: "Prato vegetariano sofisticado com baixo índice glicêmico.", 
+        difficulty: "Simples" 
+      },
+      { 
+        title: "Moqueca Vegana de Banana (Mock)", 
+        description: "Sabor tropical intenso, sem glúten e sem lactose.", 
+        difficulty: "Elaborada" 
+      }
+    ];
+  }
+
+  try {
+    const response = await fetch(N8N_CONSULT_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        ...preferences, // mode, guests, budget, restrictions, cuisine...
+        locale,
+        userId: session?.user?.id
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`N8N Consult Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // O n8n deve retornar algo como: { suggestions: [{ title, description, difficulty }, ...] }
+    return data.suggestions || [];
+
+  } catch (error) {
+    console.error("[AI] Erro na Consulta Du Chef:", error);
+    return []; // Retorna vazio para não quebrar a UI
+  }
+}
+
+/**
+ * Passo 2: Gera a receita completa e a imagem para um prato específico escolhido.
+ * Conecta com o workflow "Lumière - Personal Chef (Perfil & Receita)".
+ */
+export async function generatePersonalizedRecipeAction(params: any, locale: string) {
+  const session = await auth();
+  if (!session) throw new Error("Unauthorized");
+
+  if (!N8N_GENERATE_RECIPE_WEBHOOK) {
+    throw new Error("Webhook de Geração Completa não configurado.");
+  }
+
+  try {
+    console.log(`[AI] Gerando receita completa para: ${params.selectedTitle || 'Personalizado'}`);
+
+    const response = await fetch(N8N_GENERATE_RECIPE_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        ...params, // selectedTitle, contextData (preferences)...
+        locale,
+        userId: session.user?.id,
+        userName: session.user?.name
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[AI] N8N Generate Error Body:", errorText);
+      throw new Error(`Falha no N8N: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Espera-se que o n8n retorne o objeto Recipe completo + imageUrl
+    return data;
+
+  } catch (error) {
+    console.error("[AI] Erro na Geração Completa:", error);
+    throw new Error("Falha ao criar sua receita personalizada.");
+  }
+}
+
+
+// --- ACTIONS GEMINI (LEGADO/PADRÃO) ---
 
 export async function generateMenuAction(moduleModifier: string, category: string, locale: string) {
   const session = await auth();
@@ -91,7 +204,7 @@ export async function generateMenuAction(moduleModifier: string, category: strin
     Traduza Título, Descrição e Dificuldade para ${targetLanguage}.
     
     IMPORTANTE:
-    Mantenha o campo 'complexityLevel' EXATAMENTE como 'Simples' ou 'Elaborada' (não traduza este valor específico pois é usado para filtro no sistema).
+    Mantenha o campo 'complexityLevel' EXATAMENTE como 'Simples' ou 'Elaborada'.
     
     Gere 20 sugestões de pratos.
     Divida RIGOROSAMENTE: 10 'Simples' e 10 'Elaborada'.
@@ -133,7 +246,7 @@ export async function generateRecipeAction(title: string, moduleModifier: string
     Gere as tags (ex: Sem Glúten, Low Carb, Gourmet) traduzidas para ${targetLanguage}.
     
     Requisitos:
-    1. 'visualDescription': Prompt de fotografia detalhado (pode manter em Inglês se preferir para melhor qualidade de imagem, ou no idioma nativo).
+    1. 'visualDescription': Prompt de fotografia detalhado (pode manter em Inglês se preferir).
     2. 'complexityRating': Manter 'Simples' ou 'Elaborada'.
     
     Retorne JSON estrito.
@@ -155,11 +268,14 @@ export async function generateRecipeAction(title: string, moduleModifier: string
   }
 }
 
+
+// --- ACTIONS DE MEDIA (AVULSAS) ---
+
 export async function generateMediaAction(recipeTitle: string, visualDescription: string, locale: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  if (!N8N_WEBHOOK_URL) {
+  if (!N8N_IMAGE_WEBHOOK_URL) {
     return {
       imageUrl: `https://placehold.co/1024x1024/141E1B/D4AF37?text=${encodeURIComponent(recipeTitle)}`,
       videoUrl: null
@@ -167,10 +283,9 @@ export async function generateMediaAction(recipeTitle: string, visualDescription
   }
 
   try {
-    console.log(`[AI] Solicitando mídia ao n8n em ${locale}...`);
+    console.log(`[AI] Solicitando mídia avulsa ao n8n em ${locale}...`);
     
-    // Enviamos o locale para o n8n caso ele queira gerar textos ou legendas no idioma correto
-    const response = await fetch(N8N_WEBHOOK_URL, {
+    const response = await fetch(N8N_IMAGE_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -179,13 +294,13 @@ export async function generateMediaAction(recipeTitle: string, visualDescription
       body: JSON.stringify({
         recipeTitle,
         visualDescription,
-        locale: locale, // Passando o idioma
+        locale: locale,
         userId: session.user.id
       })
     });
 
     if (!response.ok) {
-      throw new Error(`N8N Error: ${response.status}`);
+      throw new Error(`N8N Media Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -268,48 +383,5 @@ export async function generateStepVideoAction(stepText: string, recipeTitle: str
   } catch (error) {
     console.error("Video Pipeline Failed:", error);
     return { videoUrl: null };
-  }
-}
-
-export async function generatePersonalizedRecipeAction(formData: any, locale: string) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
-
-  // Validação básica se necessário (pode usar Zod aqui também)
-
-  if (!N8N_PERSONAL_CHEF_WEBHOOK) {
-    throw new Error("Webhook do Personal Chef não configurado.");
-  }
-
-  try {
-    console.log(`[AI Personal Chef] Solicitando receita personalizada para ${session.user?.email}...`);
-
-    const response = await fetch(N8N_PERSONAL_CHEF_WEBHOOK, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.N8N_AUTH_TOKEN}`
-      },
-      body: JSON.stringify({
-        ...formData, // peso, altura, ingredientes, objetivo
-        locale,
-        userId: session?.user?.id,
-        userName: session?.user?.name
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`N8N Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // O n8n deve retornar um JSON com a estrutura da receita + imagem gerada
-    // Ex: { recipe: { title: "...", ingredients: [...] }, imageUrl: "..." }
-    return data;
-
-  } catch (error) {
-    console.error("Personal Chef Pipeline Failed:", error);
-    throw new Error("Falha ao criar sua receita personalizada.");
   }
 }
