@@ -5,21 +5,22 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // 1. Recebemos os dados do Mobile
+    // Extrai dados do Mobile
     const { selectedTitle, contextData, locale, userId, userName } = body;
 
+    // Logs para Debug no Vercel/Terminal
+    console.log("--- [API Mobile Generate] ---");
+    console.log("Title:", selectedTitle);
+    console.log("UserID:", userId);
+    
     if (!selectedTitle) {
       return NextResponse.json({ error: "Título não informado" }, { status: 400 });
     }
 
-    console.log(`[API Mobile] Iniciando geração para: ${selectedTitle} (User: ${userId})`);
-
-    // 2. Chamamos a Action
-    // CORREÇÃO: Passamos 'contextData' como propriedade aninhada, não espalhada (...contextData)
-    // Isso garante que o n8n receba {{ $json.body.contextData }} corretamente.
+    // Chama a Action passando os dados explicitamente
     const fullRecipe = await generatePersonalizedRecipeAction({
       selectedTitle,
-      contextData, // <--- Mantemos aninhado
+      contextData, // Passa o objeto de preferências aninhado
       userId, 
       userName
     }, locale || 'pt');
@@ -29,11 +30,11 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("[API Mobile Generate] Fatal Error:", error);
 
+    // Tratamento de erro 401
     if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: "Sessão inválida." }, { status: 401 });
+        return NextResponse.json({ error: "Não autorizado. Faça login novamente." }, { status: 401 });
     }
 
-    // Retorna o erro real para facilitar o debug no mobile
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Erro interno no servidor." }, 
       { status: 500 }

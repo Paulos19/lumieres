@@ -87,28 +87,14 @@ const recipeSchema: Schema = {
  * Retorna uma lista leve de sugestões (JSON).
  */
 export async function consultPersonalChefAction(preferences: any, locale: string) {
-  const session = await auth();
-
-  // Fallback se webhook não estiver configurado (para testes)
+  // Para consulta simples, não exigimos auth rigoroso ou usamos mock se falhar
   if (!N8N_CONSULT_WEBHOOK) {
-    console.warn("⚠️ [AI] Webhook de Consulta N8N não configurado. Retornando Mock.");
+    console.warn("⚠️ Webhook N8N Consult não configurado. Usando Mock.");
     await new Promise(r => setTimeout(r, 1500));
     return [
-      { 
-        title: "Salmão Grelhado com Aspargos (Mock)", 
-        description: "Opção leve rica em ômega-3, ideal para o jantar.", 
-        difficulty: "Médio" 
-      },
-      { 
-        title: "Risoto de Cogumelos Selvagens (Mock)", 
-        description: "Prato vegetariano sofisticado com baixo índice glicêmico.", 
-        difficulty: "Simples" 
-      },
-      { 
-        title: "Moqueca Vegana de Banana (Mock)", 
-        description: "Sabor tropical intenso, sem glúten e sem lactose.", 
-        difficulty: "Elaborada" 
-      }
+      { title: "Salmão com Aspargos (Mock)", description: "Opção leve rica em ômega-3.", difficulty: "Médio" },
+      { title: "Risoto de Cogumelos (Mock)", description: "Prato vegetariano sofisticado.", difficulty: "Simples" },
+      { title: "Moqueca Vegana (Mock)", description: "Sabor tropical intenso.", difficulty: "Elaborada" }
     ];
   }
 
@@ -119,40 +105,36 @@ export async function consultPersonalChefAction(preferences: any, locale: string
         "Content-Type": "application/json",
         "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
       },
-      body: JSON.stringify({
-        ...preferences, // mode, guests, budget, restrictions, cuisine...
-        locale,
-        userId: session?.user?.id
-      })
+      body: JSON.stringify({ ...preferences, locale })
     });
 
-    if (!response.ok) {
-      throw new Error(`N8N Consult Error: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`N8N Consult Error: ${response.status}`);
     const data = await response.json();
-    // O n8n deve retornar algo como: { suggestions: [{ title, description, difficulty }, ...] }
     return data.suggestions || [];
-
   } catch (error) {
-    console.error("[AI] Erro na Consulta Du Chef:", error);
-    return []; // Retorna vazio para não quebrar a UI
+    console.error("[AI] Erro Consult:", error);
+    return [];
   }
 }
 
 /**
- * Passo 2: Gera a receita completa e a imagem para um prato específico escolhido.
- * Conecta com o workflow "Lumière - Personal Chef (Perfil & Receita)".
+ * Passo 2: Geração Completa (Receita + Imagem)
+ * Lógica Híbrida: Aceita ID manual (Mobile) ou Sessão (Web)
  */
 export async function generatePersonalizedRecipeAction(params: any, locale: string) {
-  // LÓGICA HÍBRIDA (WEB vs MOBILE)
+  // 1. Tenta pegar ID dos parâmetros
   let userId = params.userId;
   let userName = params.userName;
 
-  // Se NÃO veio ID nos parâmetros (Fluxo Web), tentamos pegar da sessão
+  console.log(`[AI Action] Generate iniciado. UserID Params: ${userId}`);
+
+  // 2. Se não veio ID, tenta autenticação via Cookie (Web)
   if (!userId) {
     const session = await auth();
-    if (!session || !session.user) throw new Error("Unauthorized");
+    if (!session || !session.user) {
+        console.error("[AI Action] Bloqueio: Sem ID e sem Sessão.");
+        throw new Error("Unauthorized");
+    }
     userId = session.user.id;
     userName = session.user.name;
   }
@@ -162,43 +144,35 @@ export async function generatePersonalizedRecipeAction(params: any, locale: stri
   }
 
   try {
-      console.log(`[AI] Enviando para N8N: ${N8N_GENERATE_RECIPE_WEBHOOK}`);
-      
-      const response = await fetch(N8N_GENERATE_RECIPE_WEBHOOK, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
-        },
-        body: JSON.stringify({
-          ...params, 
-          locale,
-          userId: userId,
-          userName: userName
-        })
-      });
+    console.log(`[AI] Enviando para N8N para user: ${userId}`);
 
-      // Se o N8N der erro (4xx ou 5xx)
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[AI] N8N Erro ${response.status}:`, errorText);
-        throw new Error(`Erro no N8N (${response.status}): Verifique o terminal do servidor.`);
-      }
+    const response = await fetch(N8N_GENERATE_RECIPE_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${N8N_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        ...params, // selectedTitle, contextData...
+        locale,
+        userId: userId,     // Usa a variável resolvida
+        userName: userName
+      })
+    });
 
-      // Tenta fazer o parse do JSON com segurança
-      const responseText = await response.text();
-      try {
-        const data = JSON.parse(responseText);
-        return data;
-      } catch (e) {
-        console.error("[AI] N8N retornou algo que não é JSON:", responseText);
-        throw new Error("N8N retornou uma resposta inválida (não-JSON).");
-      }
-
-    } catch (error) {
-      console.error("[AI] Erro na Geração Completa:", error);
-      throw error; // Repassa o erro para a rota API tratar
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[AI] N8N Erro ${response.status}:`, errorText);
+      throw new Error(`Erro no N8N: ${response.status}`);
     }
+
+    const data = await response.json();
+    return data;
+
+  } catch (error) {
+    console.error("[AI] Erro Generate Action:", error);
+    throw error;
+  }
 }
 
 
