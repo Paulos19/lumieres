@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// Pega a URL e Token das variáveis de ambiente (já configuradas no seu actions/ai.ts)
+// Assegure-se de que estas variáveis estão no .env do seu projeto na Vercel
 const N8N_WEBHOOK_URL = process.env.N8N_PERSONAL_CHEF_WEBHOOK_URL;
 const N8N_AUTH_TOKEN = process.env.N8N_AUTH_TOKEN;
 
@@ -10,8 +10,11 @@ export async function POST(req: Request) {
     const { weight, height, goal, ingredients, restrictions, locale, userId, userName } = body;
 
     if (!N8N_WEBHOOK_URL) {
-      return NextResponse.json({ error: "Serviço de IA indisponível (Webhook não configurado)" }, { status: 503 });
+      console.error("N8N Webhook URL não configurada");
+      return NextResponse.json({ error: "Serviço de IA indisponível temporariamente." }, { status: 503 });
     }
+
+    console.log(`[Mobile AI] Iniciando geração para ${userName}...`);
 
     // Chama o N8N
     const response = await fetch(N8N_WEBHOOK_URL, {
@@ -33,16 +36,18 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      throw new Error(`Erro N8N: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`[Mobile AI] Erro N8N (${response.status}): ${errorText}`);
+      throw new Error(`Erro no serviço de IA: ${response.status}`);
     }
 
     const data = await response.json();
     
-    // O N8N retorna { recipe: {...}, imageUrl: "..." }
+    // O N8N deve retornar { recipe: {...}, imageUrl: "..." } ou o JSON da receita com a imagem dentro
     return NextResponse.json(data);
 
-  } catch (error) {
-    console.error("Mobile AI Error:", error);
-    return NextResponse.json({ error: "Falha ao gerar receita" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[Mobile AI] Erro:", error);
+    return NextResponse.json({ error: "Falha ao criar sua receita. Tente novamente." }, { status: 500 });
   }
 }
